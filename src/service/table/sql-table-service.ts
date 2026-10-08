@@ -33,6 +33,7 @@ import { hashUserInput_ACU, logDebug_ACU, logError_ACU, logWarn_ACU, parseTableT
 import {
   NameMapper,
   createNameMapperOwnerToken_ACU,
+  getGlobalNameMapperOwnershipSnapshot_ACU,
   publishGlobalNameMapperEmptySchema_ACU,
   publishGlobalNameMapperForDDLs_ACU,
   releaseGlobalNameMapperForOwner_ACU,
@@ -2075,7 +2076,12 @@ export class SqlTableService implements ITableStorageProvider {
    */
   private _buildNameMapper(data: TableDataObject_ACU): boolean {
     try {
-      return publishGlobalNameMapperForDDLs_ACU(this._getRuntimeDdlMap_ACU(data), this.nameMapperOwner_ACU);
+      const published = publishGlobalNameMapperForDDLs_ACU(this._getRuntimeDdlMap_ACU(data), this.nameMapperOwner_ACU);
+      if (!published) {
+        const owner = getGlobalNameMapperOwnershipSnapshot_ACU();
+        logWarn_ACU(`[SqlTableService] NameMapper 发布权不匹配: 本实例=${this.nameMapperOwner_ACU.id}, 当前=${owner.ownerId ?? 'none'} (${owner.ownerLabel ?? 'none'})`);
+      }
+      return published;
     } catch (e: any) {
       logWarn_ACU(`[SqlTableService] 构建 NameMapper 失败: ${e?.message}`);
       return false;
@@ -2242,7 +2248,9 @@ export class SqlTableService implements ITableStorageProvider {
     if (Object.keys(missingSheets).length === 0) {
       // 不能因物理表已存在就跳过映射同步：删楼回滚/模板切换可重建
       // SQLite runtime，却不会制造缺表；此时外部 CRUD 仍需当前 schema 的列映射。
-      if (!this._tryPublishNameMapper_ACU(this._readCanonicalView_ACU() || templateData)) {
+      // 共享 JSON 视图可能已被模板编辑或另一条异步路径改写；映射只能由本实例
+      // 实际持有的 SQLite schema 导出，不能把视图中多出的 sheet 当作 runtime 表。
+      if (!this._tryPublishNameMapper_ACU(this._exportCurrentDataStrict())) {
         throw new Error('name_mapper_publish_rejected: 未能发布当前 schema 的中英文名映射，已阻止后续写入。');
       }
       return;
@@ -2292,17 +2300,11 @@ export class SqlTableService implements ITableStorageProvider {
     }
     this.syncBridge.loadFromTableData(partialData, { strict: true, allowRuntimeDdlFallback: true });
 
-    // 合并新建的表到当前 JSON 视图
-    const currentView = this._readCanonicalView_ACU();
-    if (currentView) {
-      for (const [key, sheet] of Object.entries(missingSheets)) {
-        (currentView as any)[key] = sheet;
-      }
-      if (this.isolatedRuntime_ACU) this.isolatedJsonView_ACU = currentView;
-    } else {
-      this._publishCanonicalView_ACU(templateData);
-    }
-    if (!this._tryPublishNameMapper_ACU(this._readCanonicalView_ACU() || templateData)) {
+    // 新表已进入本实例 SQLite；以实际导出结果同步视图和映射，避免把陈旧
+    // canonical 视图中并不存在的表重新发布为可写 schema。
+    const runtimeView = this._exportCurrentDataStrict();
+    this._publishCanonicalView_ACU(runtimeView);
+    if (!this._tryPublishNameMapper_ACU(runtimeView)) {
       throw new Error('name_mapper_publish_rejected: 建表后未能发布中英文名映射，已阻止后续写入。');
     }
 

@@ -165,6 +165,57 @@ describe('Provider 置换期间的 NameMapper 所有权', () => {
     expect(getGlobalNameMapperStatus_ACU().binding).toBe('unbound');
   });
 
+  it('填表前冻结 schema 时从本实例 SQLite 重建映射，不读取混入旧表的共享视图', async () => {
+    const provider = new SqlTableService();
+    const data = buildTableData_ACU([['1', '铁剑', '3']]);
+    expect((await provider.loadFromData(data)).loaded).toBe(true);
+
+    // 历史模板编辑可能使共享视图出现一个没有进入此 SQLite 实例的表。
+    mockCurrentJsonTableData = {
+      ...data,
+      sheet_old: {
+        ...data.sheet_0,
+        uid: 'old',
+        name: 'old',
+      },
+    };
+    const ownerBefore = getGlobalNameMapperOwnershipSnapshot_ACU();
+    const scope = { templateData: data, templateDataWithRows: data } as any;
+
+    expect(() => provider.prepareRuntimeSchemaForFill(scope)).not.toThrow();
+    expect(getGlobalNameMapperOwnershipSnapshot_ACU()).toEqual(ownerBefore);
+    expect(getNameMapper().resolveColumnName('inventory', '物品名称')).toBe('item_name');
+    provider.dispose();
+  });
+
+  it('填表前补建模块表后以实际 SQLite 导出结果同步共享视图', async () => {
+    const provider = new SqlTableService();
+    const data = buildTableData_ACU([['1', '铁剑', '3']]);
+    expect((await provider.loadFromData(data)).loaded).toBe(true);
+    const expanded = buildTableData_ACU([['1', '铁剑', '3']]);
+    expanded.sheet_second = {
+      ...expanded.sheet_0,
+      uid: 'inventory_two',
+      name: 'inventory_two',
+      content: [['row_id', 'item_name', 'quantity']],
+      sourceData: {
+        ...expanded.sheet_0.sourceData,
+        ddl: INVENTORY_DDL.replace('CREATE TABLE inventory', 'CREATE TABLE inventory_two'),
+      },
+    };
+    mockCurrentJsonTableData = {
+      ...data,
+      sheet_old: { ...data.sheet_0, uid: 'old', name: 'old' },
+    };
+
+    provider.prepareRuntimeSchemaForFill({ templateData: expanded, templateDataWithRows: expanded } as any);
+
+    expect((provider.getCurrentData() as any).sheet_second).toBeDefined();
+    expect((mockCurrentJsonTableData as any).sheet_old).toBeUndefined();
+    expect(getGlobalNameMapperStatus_ACU().binding).toBe('bound');
+    provider.dispose();
+  });
+
   it('replaceAllData 成功后由本实例重新发布映射，失败时不留下 bound 假象', async () => {
     const provider = new SqlTableService();
     await provider.loadFromData(buildTableData_ACU([['1', '铁剑', '3']]));
