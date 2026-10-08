@@ -269,6 +269,9 @@ export function getSheetColumnProjection_ACU(sheet: Sheet_ACU): {
   const physicalCanonical = new Set([
     ...physicalNames.map(value => value.toLowerCase()),
     ...(canMapByIndex ? [] : ddlColumns.map(column => column.sqlName.toLowerCase())),
+    // Older guides stored the display header rather than the SQL column name.
+    // Rendering already matches headers; validation must accept them too.
+    ...headers.map(value => value.toLowerCase()),
   ]);
   const unknown = hidden.filter(value => !physicalCanonical.has(value.toLowerCase()));
   if (unknown.length > 0) {

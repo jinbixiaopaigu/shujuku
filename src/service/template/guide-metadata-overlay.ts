@@ -9,6 +9,7 @@
  */
 
 import { TABLE_ORDER_FIELD_ACU } from '../../shared/constants';
+import { parseDDLColumnInfos_ACU } from '../../shared/ddl-utils';
 
 /**
  * 逐元素严格比较表头（长度 + 每个单元格 String(x ?? '')）。
@@ -25,6 +26,7 @@ export function isSameSheetHeader_ACU(left: unknown, right: unknown): boolean {
 
 export interface GuideMetadataOverlayResult_ACU {
     changed: boolean;
+    droppedHiddenPhysicalColumns: string[];
 }
 
 /**
@@ -47,10 +49,10 @@ export function applyGuideMetadataToSheet_ACU(
     options: { inheritDdl: boolean },
 ): GuideMetadataOverlayResult_ACU {
     if (!targetSheet || typeof targetSheet !== 'object') {
-        return { changed: false };
+        return { changed: false, droppedHiddenPhysicalColumns: [] };
     }
     if (!guideSheet || typeof guideSheet !== 'object') {
-        return { changed: false };
+        return { changed: false, droppedHiddenPhysicalColumns: [] };
     }
 
     let changed = false;
@@ -91,9 +93,35 @@ export function applyGuideMetadataToSheet_ACU(
         } else if (targetSourceData.ddl !== undefined) {
             merged.ddl = targetSourceData.ddl;
         }
+        // hiddenPhysicalColumns is tied to the authoritative header/DDL, not just
+        // descriptive guide metadata. A guide may describe a column that was
+        // removed from the checkpoint; retaining that ghost reference makes the
+        // visualizer fail while rendering the entire page.
+        const droppedHiddenPhysicalColumns: string[] = [];
+        if (Array.isArray(merged.hiddenPhysicalColumns)) {
+            const headers = Array.isArray(targetSheet.content?.[0])
+                ? targetSheet.content[0].map((value: unknown) => String(value ?? ''))
+                : [];
+            const ddlColumns = parseDDLColumnInfos_ACU(String(merged.ddl || ''));
+            const canMapByIndex = ddlColumns.length === headers.length;
+            const knownNames = new Set([
+                ...(canMapByIndex ? ddlColumns.map(column => column.sqlName) : headers),
+                ...(canMapByIndex ? [] : ddlColumns.map(column => column.sqlName)),
+                ...headers,
+            ].map(name => name.toLowerCase()));
+            const retained = merged.hiddenPhysicalColumns.filter((value: unknown) => {
+                const name = String(value ?? '').trim();
+                if (knownNames.has(name.toLowerCase())) return true;
+                if (name) droppedHiddenPhysicalColumns.push(name);
+                return false;
+            });
+            if (retained.length > 0) merged.hiddenPhysicalColumns = retained;
+            else delete merged.hiddenPhysicalColumns;
+        }
         targetSheet.sourceData = merged;
         changed = true;
+        return { changed, droppedHiddenPhysicalColumns };
     }
 
-    return { changed };
+    return { changed, droppedHiddenPhysicalColumns: [] };
 }

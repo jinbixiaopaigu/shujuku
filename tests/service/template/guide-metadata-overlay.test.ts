@@ -84,6 +84,45 @@ describe('applyGuideMetadataToSheet_ACU', () => {
     expect(target.sourceData.note).toBe('说明');
   });
 
+  it('guide 隐藏列只继承仍在权威表结构中的列，避免幽灵引用导致可视化白屏', () => {
+    const target = {
+      content: [['row_id', '当前详细地点'], ['1', '荒宅正门前']],
+      sourceData: { ddl: 'CREATE TABLE global_state (row_id INTEGER PRIMARY KEY, current_location TEXT);' },
+    };
+    const guide = {
+      content: [['row_id', '当前详细地点', '全局状态']],
+      sourceData: { hiddenPhysicalColumns: ['全局状态'], note: '新说明' },
+    };
+    const result = applyGuideMetadataToSheet_ACU(target, guide, { inheritDdl: false });
+    expect(result.droppedHiddenPhysicalColumns).toEqual(['全局状态']);
+    expect(target.sourceData.hiddenPhysicalColumns).toBeUndefined();
+    expect(target.content).toEqual([['row_id', '当前详细地点'], ['1', '荒宅正门前']]);
+    expect(target.sourceData.note).toBe('新说明');
+  });
+
+  it('权威数据仍含隐藏列时保留列和值', () => {
+    const target = {
+      content: [['row_id', '当前详细地点', '全局状态'], ['1', '荒宅正门前', '全局状态']],
+      sourceData: { ddl: 'CREATE TABLE global_state (row_id INTEGER PRIMARY KEY, current_location TEXT);' },
+    };
+    const guide = { sourceData: { hiddenPhysicalColumns: ['全局状态'] } };
+    const result = applyGuideMetadataToSheet_ACU(target, guide, { inheritDdl: false });
+    expect(result.droppedHiddenPhysicalColumns).toEqual([]);
+    expect(target.sourceData.hiddenPhysicalColumns).toEqual(['全局状态']);
+    expect(target.content[1][2]).toBe('全局状态');
+  });
+
+  it('DDL 与表头等宽时仍接受旧配置中的中文表头隐藏名', () => {
+    const target = {
+      content: [['row_id', '全局状态', '当前详细地点'], ['1', '全局状态', '荒宅正门前']],
+      sourceData: { ddl: 'CREATE TABLE global_state (row_id INTEGER PRIMARY KEY, story_state TEXT, current_location TEXT);' },
+    };
+    const guide = { sourceData: { hiddenPhysicalColumns: ['全局状态'] } };
+    const result = applyGuideMetadataToSheet_ACU(target, guide, { inheritDdl: false });
+    expect(result.droppedHiddenPhysicalColumns).toEqual([]);
+    expect(target.sourceData.hiddenPhysicalColumns).toEqual(['全局状态']);
+  });
+
   it('guide 无 sourceData 时 target.sourceData 保持不变', () => {
     const target = { sourceData: { ddl: 'x', note: '旧' } };
     applyGuideMetadataToSheet_ACU(target, { name: '仅改名' } as any, { inheritDdl: false });

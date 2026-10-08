@@ -397,6 +397,17 @@ describe('hiddenPhysicalColumns projection', () => {
       .toThrow('指向不存在的 physical column');
   });
 
+  it('DDL 对齐时也按旧配置的中文表头隐藏对应物理列', () => {
+    const legacy = {
+      ...sheet,
+      sourceData: { ...sheet.sourceData, hiddenPhysicalColumns: ['旧备注'] },
+    };
+    const projection = getSheetColumnProjection_ACU(legacy);
+    expect(projection.visibleColumns.map(column => column.header)).toEqual(['row_id', '名称', '数量']);
+    expect(projection.columns[2].physicalName).toBe('legacy_note');
+    expect(projectSheetRowToVisibleColumns_ACU(legacy, legacy.content[1])).toEqual(['1', '铁剑', '3']);
+  });
+
   it('DDL 与表头无法完整对齐时按名匹配隐藏列，而不是拒绝投影', () => {
     // 模板范围投影会构造「模板列少于运行时列」的形态：DDL 列数与 content[0] 不等。
     // 此时不再抛错，而是按 DDL 物理名 / 表头名匹配隐藏列。

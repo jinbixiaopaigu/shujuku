@@ -141,7 +141,12 @@ export function migrateContentNullToRowId(data: Record<string, any> | null): Rec
                           logWarn_ACU(msg);
                           warnings.push(msg);
                       }
-                      applyGuideMetadataToSheet_ACU(next, guideSheet, { inheritDdl: headerMatches });
+                      const overlayResult = applyGuideMetadataToSheet_ACU(next, guideSheet, { inheritDdl: headerMatches });
+                      if (overlayResult.droppedHiddenPhysicalColumns.length > 0) {
+                          const msg = `[Merge] 表「${String(next.name || guideSheet?.name || k)}」(${k}) 的隐藏列配置指向不存在的列：${overlayResult.droppedHiddenPhysicalColumns.join('、')}；已跳过该配置，保留权威数据。`;
+                          logWarn_ACU(msg);
+                          warnings.push(msg);
+                      }
                       if (Array.isArray(guideSheet?.seedRows)) next.seedRows = JSON.parse(JSON.stringify(guideSheet.seedRows));
                       guided[k] = next;
                   } else {
@@ -156,7 +161,12 @@ export function migrateContentNullToRowId(data: Record<string, any> | null): Rec
                           if (!Array.isArray(next.content) || next.content.length === 0) {
                               next.content = [histHeader || ['row_id']];
                           }
-                          applyGuideMetadataToSheet_ACU(next, guideSheet, { inheritDdl: false });
+                          const overlayResult = applyGuideMetadataToSheet_ACU(next, guideSheet, { inheritDdl: false });
+                          if (overlayResult.droppedHiddenPhysicalColumns.length > 0) {
+                              const msg = `[Merge] 表「${String(next.name || guideSheet?.name || k)}」(${k}) 的隐藏列配置指向不存在的列：${overlayResult.droppedHiddenPhysicalColumns.join('、')}；已跳过该配置，保留权威数据。`;
+                              logWarn_ACU(msg);
+                              warnings.push(msg);
+                          }
                           if (Array.isArray(guideSheet?.seedRows)) next.seedRows = JSON.parse(JSON.stringify(guideSheet.seedRows));
                           const reason = !guideHeaderValid
                               ? `Sheet Guide 表头缺少 row_id 首列`
