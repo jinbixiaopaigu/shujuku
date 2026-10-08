@@ -272,11 +272,11 @@
     "uid": "sheet_npc_biao",
     "name": "NPC表",
     "sourceData": {
-      "note": "所有与剧情有交集的具名角色先在此登记。用户标记为追踪后才晋升追踪角色表；退场与删除由用户控制。\n归档状态仅允许普通角色、追踪角色、退场角色、删除角色。旧 S/N 分类只在迁移时映射，不用于新数据。",
+      "note": "所有与剧情有交集的具名角色先在此登记。用户标记为追踪后，归档状态改为“追踪角色”，并在追踪角色表建档；本表仍保留登记行。旧 S/N 分类仅供迁移映射，新数据只用普通角色、追踪角色、退场角色、删除角色。",
       "initNode": "故事开始时，为在场有明确称谓的非主角角色各建一条。归档状态默认普通角色 。\nSQL示例: INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), '山田', '男', 'XX班学生', '黑色寸头，发茬粗硬，发际线方正。方脸，眉弓突出，浓黑杂乱眉。眼窝深，眼细长，黑瞳。鼻梁宽扁，鼻头圆钝。厚唇下唇外翻。身高185cm，颈粗肩圆。深褐皮肤，手臂有片状色素沉淀。', '教室', '在场', '主角:同学', '普通角色');",
       "insertNode": "新登场的在场互动角色，同时满足以下条件时新增，归档状态固定 普通角色 ：\n① 有明确姓名称谓\n② 在追踪角色表和本表中均无记录\nSQL示例: INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), '田中', '女', '图书管理员', '亚麻色及肩发。心形脸，下巴尖细。眉毛弯细，瞳色浅绿。鼻梁微拱，鼻尖圆润。嘴唇饱满，上唇薄下唇厚，唇色浅红。暖白透粉皮肤，双颊淡色雀斑，左耳垂小痣。身高168cm，丰满，腰臀曲线柔和。', '校图书馆', '在场', NULL, '普通角色');\n\n在本表进行新增条目时，禁止将该角色同时向追踪角色表插入。",
-      "updateNode": "<if cond=\"db:first_npc.where('archive_status','普通角色').exists()\">\n仅 archive_status = '普通角色' 的行允许更新。其他行禁止UPDATE。\n【高频】当角色移动或进入/离开场景时，更新其所在地点和在场状态。\n【低频】姓名、性别、身份等根本性改变时才更新，无新证据禁止改写。\n【禁止】archive_status 列由前端管理，填表AI不得在任何UPDATE语句中修改此列。\nSQL示例(移动): UPDATE first_npc SET location_name = '图书馆', presence_status = '在场' WHERE name = '山田' AND archive_status = '普通角色';\nSQL示例(身份揭示): UPDATE first_npc SET identity_text = '潜伏的间谍', relations_text = '主角:监视者' WHERE name = '田中' AND archive_status = '普通角色';<else>禁止更新。</if>",
-      "deleteNode": "<if sql=\"SELECT 1 FROM first_npc WHERE name IN (SELECT name FROM second_npc) LIMIT 1\">【优先自清洁】若姓名已存在于追踪角色表，立即从本表删除\nSQL示例: DELETE FROM first_npc WHERE name IN (SELECT name FROM second_npc);\n</if>\n<if cond=\"db:first_npc.where('archive_status','删除角色').exists()\">归档状态为 删除角色 的行，执行删除。\nSQL示例: DELETE FROM first_npc WHERE archive_status = '删除角色';</if>\n剩余行禁止删除",
+      "updateNode": "已有明确剧情依据时，更新姓名、身份、地点、在场状态及关系等实际变化；追踪角色仍在本表保留登记并同步必要的基本事实。归档状态由用户管理，填表 AI 不得修改。未被推翻的事实保持原样。",
+      "deleteNode": "仅归档状态已由用户明确设为“删除角色”时删除本表记录。晋升追踪、离场、死亡均不自动删除；追踪角色须同时保留本表登记。",
       "ddl": "CREATE TABLE first_npc ( -- NPC表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  identity_text TEXT, -- 身份\n  appearance TEXT, -- 外貌特征\n  location_name TEXT, -- 所在地点\n  presence_status TEXT NOT NULL DEFAULT '在场' CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  archive_status TEXT NOT NULL DEFAULT '普通角色' CHECK(archive_status IN ('普通角色','追踪角色','退场角色','删除角色')), -- 归档状态\n  author_note TEXT -- 作者要求\n);"
     },
     "content": [
@@ -369,7 +369,7 @@
     "sourceData": {
       "note": "仅从 NPC 表中归档状态为追踪角色的行晋升。稳定事实与当前有效行为逻辑以本表为准；不可凭世界书或模型推测直接新增。\n新增列：一句话定位≤30字；核心行为逻辑≤180字；当前目标与顾虑≤120字；互动方式≤120字；关键过往摘要≤200字。写可观察的行为和约束，不能只贴性格标签。",
       "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
-      "deleteNode": "<if sql=\"SELECT 1 FROM second_npc LIMIT 1\">当不存在待降级、待删除的行时，本表不做任何删除操作。<else>本表无数据，无需删除。</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待降级'\">【待降级处理】本轮存在 role_profile = '待降级' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待降级'\"]}\n将该角色的基础信息写回 NPC 表，归档状态设为 '普通角色'，随后从本表删除。\nSQL示例(降级): INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status)\nSELECT (SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), name, gender, identity_text, appearance, location_name, presence_status, relations_text, '普通角色'\nFROM second_npc WHERE role_profile = '待降级';\n\n执行后立即：DELETE FROM second_npc WHERE role_profile = '待降级';</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待删除'\">【待删除处理】本轮存在 role_profile = '待删除' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待删除'\"]}\n直接删除该行，不做任何迁移。\nSQL示例(删除): DELETE FROM second_npc WHERE role_profile = '待删除';</if>",
+      "deleteNode": "填表 AI 不自行降级或删除追踪角色。仅在用户明确取消追踪或要求删除、且 NPC 登记状态已相应调整时，才可由用户操作或迁移工具删除。角色死亡不自动删除。",
       "updateNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
       "ddl": "CREATE TABLE second_npc ( -- 追踪角色表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  aliases TEXT, -- 别称\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  age TEXT NOT NULL DEFAULT '未知', -- 年龄\n  appearance TEXT NOT NULL CHECK(LENGTH(appearance) <= 60), -- 外貌特征\n  identity_text TEXT NOT NULL CHECK(LENGTH(identity_text) <= 40), -- 身份\n  base_attributes TEXT NOT NULL, -- 基础属性\n  special_attributes TEXT, -- 特有属性\n  location_name TEXT NOT NULL, -- 所在地点\n  presence_status TEXT NOT NULL CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  role_profile TEXT NOT NULL CHECK(role_profile = '追踪角色'), -- 角色定位\n  author_note TEXT, -- 作者要求\n  brief_intro TEXT, -- 一句话定位\n  core_behavior TEXT, -- 核心行为逻辑\n  current_goal TEXT, -- 当前目标与顾虑\n  interaction_style TEXT, -- 互动方式\n  relevant_history TEXT -- 关键过往摘要\n);"
@@ -609,8 +609,8 @@
       "note": "角色晋升时记录其已知的初始履历、稳定行为原则和说话边界；建档后冻结，未知留空。",
       "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
-      "updateNode": "<if cond=\"db:tracking_character_sheet.exists()\">禁止。本表记录初始性格基线，建档即锁定。\n性格词汇、衍生、用语把捉、他者声部、作者声部永久锁定。\n唯一例外：姓名、别称：与【追踪角色表当前数据】中的对应列保持一致。\nSQL示例(同步姓名): UPDATE tracking_character_sheet SET name = '陈望秋' WHERE name = '老陈';<else>禁止更新（本表目前为空）。</if>",
-      "deleteNode": "<if cond=\"db:second_npc.whereIn('role_profile', ['待降级', '待删除']).exists()\">当追踪角色表中存在 role_profile = '待降级' 或 '待删除' 的角色时，同步删除本表对应条目。<else>角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。\nSQL示例: DELETE FROM tracking_character_sheet WHERE name IN (SELECT name FROM second_npc WHERE role_profile IN ('待降级', '待删除'));\n本轮无删除需求。</if>",
+      "updateNode": "建档后冻结初始履历、稳定行为原则及说话方式与边界。仅用户确认姓名或别称更正时同步身份字段；阶段变化写入“追踪人设偏移”，不改写基线。",
+      "deleteNode": "仅在用户明确取消追踪或删除角色时同步处理。本表不因离场、死亡或单轮情绪变化自动删除。",
       "ddl": "CREATE TABLE tracking_character_sheet (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  aliases TEXT, -- 别称\n  biography TEXT, -- 初始履历\n  stable_behavior TEXT, -- 稳定行为原则\n  voice_and_boundaries TEXT -- 说话方式与边界\n);"
     },
     "content": [
@@ -767,8 +767,8 @@
       "note": "只记录有明确事件依据、持续多轮的阶段变化；单轮心情不入表。",
       "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
-      "updateNode": "<if sql=\"SELECT 1 FROM second_npc\"> 以 name 为唯一键。仅在该角色的大事记表INSERT新条目时，同步UPDATE本表。更新时只写发生变化的部分，未变化的列保持原值。具体写作格式与偏移思考逻辑同Insert触发。<else> 本轮追踪角色表为空，本表禁止 UPDATE。</if>",
-      "deleteNode": "{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\" as names_to_delete]}\n<if cond=\"v:names_to_delete != ''\">以下角色在追踪角色表中已不存在（被降级或删除），同步删除本表对应条目：\n{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\"]}\nSQL示例: DELETE FROM tracking_character_dynamic WHERE name = '老陈';\n<else>本轮禁止删除任意表。</if>\n角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。",
+      "updateNode": "仅在有明确事件依据、并持续多轮形成阶段性变化时更新；写出触发事件、阶段性变化和可观察的言行影响。单轮情绪不入表。",
+      "deleteNode": "仅在用户明确取消追踪或删除角色时同步处理。本表不因离场、死亡或短暂情绪恢复自动删除。",
       "ddl": "CREATE TABLE tracking_character_dynamic (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  cause_event TEXT, -- 触发事件\n  stage_change TEXT, -- 阶段性变化\n  observable_effect TEXT -- 可观察的言行影响\n);"
     },
     "content": [

@@ -8,6 +8,8 @@ describe('generic narrative preset SQLite mapping', () => {
     it(`${name} maps every visible header to a DDL column`, () => {
       const url = new URL(`../../../templates/generic-narrative/generated/${name}.json`, import.meta.url);
       const template = JSON.parse(readFileSync(url, 'utf8'));
+      expect(JSON.stringify(template), `${name} still contains removed role schema rules`)
+        .not.toMatch(/primary_color|新生角色S类|新生角色N类|待降级|待删除/);
       for (const [key, sheet] of Object.entries(template) as [string, any][]) {
         if (!key.startsWith('sheet_')) continue;
         const mappings = createSheetInsertPlan(sheet).mappings;

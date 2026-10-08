@@ -6,8 +6,8 @@
       "note": "角色晋升时记录其已知的初始履历、稳定行为原则和说话边界；建档后冻结，未知留空。",
       "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
-      "updateNode": "<if cond=\"db:tracking_character_sheet.exists()\">禁止。本表记录初始性格基线，建档即锁定。\n性格词汇、衍生、用语把捉、他者声部、作者声部永久锁定。\n唯一例外：姓名、别称：与【追踪角色表当前数据】中的对应列保持一致。\nSQL示例(同步姓名): UPDATE tracking_character_sheet SET name = '陈望秋' WHERE name = '老陈';<else>禁止更新（本表目前为空）。</if>",
-      "deleteNode": "<if cond=\"db:second_npc.whereIn('role_profile', ['待降级', '待删除']).exists()\">当追踪角色表中存在 role_profile = '待降级' 或 '待删除' 的角色时，同步删除本表对应条目。<else>角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。\nSQL示例: DELETE FROM tracking_character_sheet WHERE name IN (SELECT name FROM second_npc WHERE role_profile IN ('待降级', '待删除'));\n本轮无删除需求。</if>",
+      "updateNode": "建档后冻结初始履历、稳定行为原则及说话方式与边界。仅用户确认姓名或别称更正时同步身份字段；阶段变化写入“追踪人设偏移”，不改写基线。",
+      "deleteNode": "仅在用户明确取消追踪或删除角色时同步处理。本表不因离场、死亡或单轮情绪变化自动删除。",
       "ddl": "CREATE TABLE tracking_character_sheet (row_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, aliases TEXT, biography TEXT, stable_behavior TEXT, voice_and_boundaries TEXT);"
     },
     "content": [
@@ -164,8 +164,8 @@
       "note": "只记录有明确事件依据、持续多轮的阶段变化；单轮心情不入表。",
       "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
-      "updateNode": "<if sql=\"SELECT 1 FROM second_npc\"> 以 name 为唯一键。仅在该角色的大事记表INSERT新条目时，同步UPDATE本表。更新时只写发生变化的部分，未变化的列保持原值。具体写作格式与偏移思考逻辑同Insert触发。<else> 本轮追踪角色表为空，本表禁止 UPDATE。</if>",
-      "deleteNode": "{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\" as names_to_delete]}\n<if cond=\"v:names_to_delete != ''\">以下角色在追踪角色表中已不存在（被降级或删除），同步删除本表对应条目：\n{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\"]}\nSQL示例: DELETE FROM tracking_character_dynamic WHERE name = '老陈';\n<else>本轮禁止删除任意表。</if>\n角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。",
+      "updateNode": "仅在有明确事件依据、并持续多轮形成阶段性变化时更新；写出触发事件、阶段性变化和可观察的言行影响。单轮情绪不入表。",
+      "deleteNode": "仅在用户明确取消追踪或删除角色时同步处理。本表不因离场、死亡或短暂情绪恢复自动删除。",
       "ddl": "CREATE TABLE tracking_character_dynamic (row_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, cause_event TEXT, stage_change TEXT, observable_effect TEXT);"
     },
     "content": [
