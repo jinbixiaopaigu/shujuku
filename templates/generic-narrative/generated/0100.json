@@ -1,0 +1,804 @@
+{
+  "mate": {
+    "type": "chatSheets",
+    "version": 2,
+    "updateConfigUiSentinel": -1,
+    "genericNarrative": {
+      "version": 1,
+      "delivery": "chat_prompt",
+      "modules": [
+        "core",
+        "continuity"
+      ]
+    },
+    "globalInjectionConfig": {}
+  },
+  "sheet_quan_ju_shu_ju_biao": {
+    "uid": "sheet_quan_ju_shu_ju_biao",
+    "name": "全局数据表",
+    "sourceData": {
+      "note": "记录当前场景的时间、地点和可核实状态；只依据剧情明确发生的变化更新。",
+      "initNode": "首次出现时依据明确剧情初始化「全局数据表」。未知值留空；遵守 DDL 约束。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「全局数据表」；普通退场或完成应改状态。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「全局数据表」；保留未被推翻的稳定事实。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「全局数据表」；不要预写未来或重复已有行。",
+      "ddl": "CREATE TABLE sheet_quan_ju_shu_ju_biao (row_id INTEGER PRIMARY KEY, current_location TEXT, current_minor_region TEXT, current_major_region TEXT, prev_scene_time TEXT, elapsed_time TEXT, cur_time TEXT);",
+      "hiddenPhysicalColumns": [
+        "全局状态"
+      ]
+    },
+    "content": [
+      [
+        "row_id",
+        "当前详细地点",
+        "当前次要地区",
+        "当前主要地区",
+        "上轮场景时间",
+        "经过的时间",
+        "当前时间"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": -1,
+      "sendLatestRows": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM sheet_quan_ju_shu_ju_biao ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": false,
+      "entryName": "全局数据表",
+      "entryType": "constant",
+      "keywords": "",
+      "preventRecursion": true,
+      "injectionTemplate": "",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "全局数据表-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10000
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "before_character_definition",
+        "depth": 2,
+        "order": 99981
+      },
+      "fixedIndexPlacement": {
+        "position": "before_character_definition",
+        "depth": 2,
+        "order": 99982
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "当前详细地点",
+        "当前时间"
+      ],
+      "promptRowLimit": 12
+    },
+    "orderNo": 1
+  },
+  "sheet_ji_yao_biao": {
+    "uid": "sheet_ji_yao_biao",
+    "name": "纪要表",
+    "sourceData": {
+      "note": "记录已经发生的重要事件与未解决线索，按时间和证据更新，不预写未来。",
+      "initNode": "首次出现时依据明确剧情初始化「纪要表」。未知值留空；遵守 DDL 约束。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「纪要表」；普通退场或完成应改状态。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「纪要表」；保留未被推翻的稳定事实。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「纪要表」；不要预写未来或重复已有行。",
+      "ddl": "CREATE TABLE sheet_ji_yao_biao (row_id INTEGER PRIMARY KEY, code_index TEXT, time_span TEXT, today_relation TEXT, summary TEXT, chronicle_text TEXT, key_dialogue TEXT);",
+      "hiddenPhysicalColumns": []
+    },
+    "content": [
+      [
+        "row_id",
+        "编码索引",
+        "时间跨度",
+        "与今天的关系",
+        "概览",
+        "纪要",
+        "重要对话"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM sheet_ji_yao_biao ORDER BY row_id ASC LIMIT 30\"]}",
+      "sendLatestRows": -1
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "纪要",
+      "entryType": "keyword",
+      "keywords": "编码索引",
+      "preventRecursion": true,
+      "injectionTemplate": "<记忆回溯>\n$1\n</记忆回溯>",
+      "extraIndexEnabled": true,
+      "extraIndexEntryName": "纪要索引",
+      "extraIndexColumns": [
+        "编码索引",
+        "与今天的关系",
+        "概览"
+      ],
+      "extraIndexColumnModes": {
+        "编码索引": "both",
+        "与今天的关系": "both",
+        "概览": "index_only"
+      },
+      "extraIndexInjectionTemplate": "<已发生的事件概览>\n$1\n</已发生的事件概览>",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 999,
+        "order": 10000
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 1000,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 9999,
+        "order": 99987
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 9999,
+        "order": 99988
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "编码索引",
+        "概览",
+        "纪要"
+      ],
+      "promptRowLimit": 6
+    },
+    "orderNo": 2
+  },
+  "sheet_zhu_jue_xin_xi": {
+    "uid": "sheet_zhu_jue_xin_xi",
+    "name": "主角信息",
+    "sourceData": {
+      "note": "记录主角稳定身份与当前可核实状态；未知信息留空，不推测。",
+      "initNode": "首次出现时依据明确剧情初始化「主角信息」。未知值留空；遵守 DDL 约束。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「主角信息」；普通退场或完成应改状态。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「主角信息」；保留未被推翻的稳定事实。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「主角信息」；不要预写未来或重复已有行。",
+      "ddl": "CREATE TABLE sheet_zhu_jue_xin_xi (row_id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age TEXT, identity_text TEXT, appearance TEXT, location_name TEXT, base_attributes TEXT, special_attributes TEXT, author_note TEXT, current_state TEXT, resources TEXT);",
+      "hiddenPhysicalColumns": [
+        "自身状态",
+        "资源数据"
+      ]
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "性别",
+        "年龄",
+        "身份",
+        "外貌特征",
+        "所在地点",
+        "基础属性",
+        "特有属性",
+        "作者要求",
+        "自身状态",
+        "资源数据"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": -1,
+      "sendLatestRows": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM sheet_zhu_jue_xin_xi ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": false,
+      "entryName": "主角信息",
+      "entryType": "constant",
+      "keywords": "",
+      "preventRecursion": true,
+      "injectionTemplate": "",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "主角信息-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10000
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "身份",
+        "所在地点",
+        "作者要求"
+      ],
+      "promptRowLimit": 12
+    },
+    "orderNo": 3
+  },
+  "sheet_npc_biao": {
+    "uid": "sheet_npc_biao",
+    "name": "NPC表",
+    "sourceData": {
+      "note": "所有与剧情有交集的具名角色先在此登记。用户标记为追踪后才晋升追踪角色表；退场与删除由用户控制。\n归档状态仅允许普通角色、追踪角色、退场角色、删除角色。旧 S/N 分类只在迁移时映射，不用于新数据。",
+      "initNode": "故事开始时，为在场有明确称谓的非主角角色各建一条。归档状态默认普通角色 。\nSQL示例: INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), '山田', '男', 'XX班学生', '黑色寸头，发茬粗硬，发际线方正。方脸，眉弓突出，浓黑杂乱眉。眼窝深，眼细长，黑瞳。鼻梁宽扁，鼻头圆钝。厚唇下唇外翻。身高185cm，颈粗肩圆。深褐皮肤，手臂有片状色素沉淀。', '教室', '在场', '主角:同学', '普通角色');",
+      "insertNode": "新登场的在场互动角色，同时满足以下条件时新增，归档状态固定 普通角色 ：\n① 有明确姓名称谓\n② 在追踪角色表和本表中均无记录\nSQL示例: INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), '田中', '女', '图书管理员', '亚麻色及肩发。心形脸，下巴尖细。眉毛弯细，瞳色浅绿。鼻梁微拱，鼻尖圆润。嘴唇饱满，上唇薄下唇厚，唇色浅红。暖白透粉皮肤，双颊淡色雀斑，左耳垂小痣。身高168cm，丰满，腰臀曲线柔和。', '校图书馆', '在场', NULL, '普通角色');\n\n在本表进行新增条目时，禁止将该角色同时向追踪角色表插入。",
+      "updateNode": "<if cond=\"db:first_npc.where('archive_status','普通角色').exists()\">\n仅 archive_status = '普通角色' 的行允许更新。其他行禁止UPDATE。\n【高频】当角色移动或进入/离开场景时，更新其所在地点和在场状态。\n【低频】姓名、性别、身份等根本性改变时才更新，无新证据禁止改写。\n【禁止】archive_status 列由前端管理，填表AI不得在任何UPDATE语句中修改此列。\nSQL示例(移动): UPDATE first_npc SET location_name = '图书馆', presence_status = '在场' WHERE name = '山田' AND archive_status = '普通角色';\nSQL示例(身份揭示): UPDATE first_npc SET identity_text = '潜伏的间谍', relations_text = '主角:监视者' WHERE name = '田中' AND archive_status = '普通角色';<else>禁止更新。</if>",
+      "deleteNode": "<if sql=\"SELECT 1 FROM first_npc WHERE name IN (SELECT name FROM second_npc) LIMIT 1\">【优先自清洁】若姓名已存在于追踪角色表，立即从本表删除\nSQL示例: DELETE FROM first_npc WHERE name IN (SELECT name FROM second_npc);\n</if>\n<if cond=\"db:first_npc.where('archive_status','删除角色').exists()\">归档状态为 删除角色 的行，执行删除。\nSQL示例: DELETE FROM first_npc WHERE archive_status = '删除角色';</if>\n剩余行禁止删除",
+      "ddl": "CREATE TABLE first_npc ( -- NPC表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  identity_text TEXT, -- 身份\n  appearance TEXT, -- 外貌特征\n  location_name TEXT, -- 所在地点\n  presence_status TEXT NOT NULL DEFAULT '在场' CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  archive_status TEXT NOT NULL DEFAULT '普通角色' CHECK(archive_status IN ('普通角色','追踪角色','退场角色','删除角色')), -- 归档状态\n  author_note TEXT -- 作者要求\n);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "性别",
+        "身份",
+        "外貌特征",
+        "所在地点",
+        "在场状态",
+        "人际关系",
+        "归档状态",
+        "作者要求"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT row_id, name, gender, identity_text, location_name, presence_status, relations_text, archive_status, author_note FROM first_npc WHERE presence_status = '在场' UNION ALL SELECT row_id, name, '' AS gender, '' AS identity_text, location_name, presence_status, relations_text, archive_status, author_note FROM first_npc WHERE presence_status = '离场' ORDER BY row_id ASC\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "NPC表",
+      "entryType": "keyword",
+      "keywords": "姓名",
+      "preventRecursion": true,
+      "injectionTemplate": "<普通NPC信息>\n$1\n</普通NPC信息>",
+      "extraIndexEnabled": true,
+      "extraIndexEntryName": "NPC表-索引",
+      "extraIndexColumns": [
+        "姓名",
+        "身份",
+        "外貌特征",
+        "人际关系",
+        "作者要求"
+      ],
+      "extraIndexColumnModes": {
+        "姓名": "both",
+        "身份": "both",
+        "外貌特征": "both",
+        "人际关系": "index_only",
+        "作者要求": "both"
+      },
+      "extraIndexInjectionTemplate": "以下为已经登场过的普通NPC角色：\n<已登场角色>\n$1\n</已登场角色>",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 10001,
+        "order": 10001
+      },
+      "extraIndexPlacement": {
+        "position": "before_character_definition",
+        "depth": 10001,
+        "order": 8010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "身份",
+        "所在地点",
+        "在场状态",
+        "人际关系",
+        "作者要求"
+      ],
+      "promptRowLimit": 12
+    },
+    "orderNo": 4
+  },
+  "sheet_zhui_zong_jue_se_biao": {
+    "uid": "sheet_zhui_zong_jue_se_biao",
+    "name": "追踪角色表",
+    "sourceData": {
+      "note": "仅从 NPC 表中归档状态为追踪角色的行晋升。稳定事实与当前有效行为逻辑以本表为准；不可凭世界书或模型推测直接新增。\n新增列：一句话定位≤30字；核心行为逻辑≤180字；当前目标与顾虑≤120字；互动方式≤120字；关键过往摘要≤200字。写可观察的行为和约束，不能只贴性格标签。",
+      "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
+      "deleteNode": "<if sql=\"SELECT 1 FROM second_npc LIMIT 1\">当不存在待降级、待删除的行时，本表不做任何删除操作。<else>本表无数据，无需删除。</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待降级'\">【待降级处理】本轮存在 role_profile = '待降级' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待降级'\"]}\n将该角色的基础信息写回 NPC 表，归档状态设为 '普通角色'，随后从本表删除。\nSQL示例(降级): INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status)\nSELECT (SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), name, gender, identity_text, appearance, location_name, presence_status, relations_text, '普通角色'\nFROM second_npc WHERE role_profile = '待降级';\n\n执行后立即：DELETE FROM second_npc WHERE role_profile = '待降级';</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待删除'\">【待删除处理】本轮存在 role_profile = '待删除' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待删除'\"]}\n直接删除该行，不做任何迁移。\nSQL示例(删除): DELETE FROM second_npc WHERE role_profile = '待删除';</if>",
+      "updateNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
+      "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
+      "ddl": "CREATE TABLE second_npc ( -- 追踪角色表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  aliases TEXT, -- 别称\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  age TEXT NOT NULL DEFAULT '未知', -- 年龄\n  appearance TEXT NOT NULL CHECK(LENGTH(appearance) <= 60), -- 外貌特征\n  identity_text TEXT NOT NULL CHECK(LENGTH(identity_text) <= 40), -- 身份\n  base_attributes TEXT NOT NULL, -- 基础属性\n  special_attributes TEXT, -- 特有属性\n  location_name TEXT NOT NULL, -- 所在地点\n  presence_status TEXT NOT NULL CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  role_profile TEXT NOT NULL CHECK(role_profile = '追踪角色'), -- 角色定位\n  author_note TEXT, -- 作者要求\n  brief_intro TEXT,\n  core_behavior TEXT,\n  current_goal TEXT,\n  interaction_style TEXT,\n  relevant_history TEXT\n);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "别称",
+        "性别",
+        "年龄",
+        "外貌特征",
+        "身份",
+        "基础属性",
+        "特有属性",
+        "所在地点",
+        "在场状态",
+        "人际关系",
+        "角色定位",
+        "作者要求",
+        "一句话定位",
+        "核心行为逻辑",
+        "当前目标与顾虑",
+        "互动方式",
+        "关键过往摘要"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT row_id, name, aliases, gender, age, appearance, identity_text, base_attributes, special_attributes, location_name, presence_status, relations_text, role_profile, author_note, brief_intro, core_behavior, current_goal, interaction_style, relevant_history FROM second_npc ORDER BY presence_status DESC, row_id ASC\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "追踪角色表",
+      "entryType": "keyword",
+      "keywords": "姓名,别称",
+      "preventRecursion": true,
+      "injectionTemplate": "<重要追踪角色信息>\n$1\n</重要追踪角色信息>",
+      "extraIndexEnabled": true,
+      "extraIndexEntryName": "追踪角色表-索引",
+      "extraIndexColumns": [
+        "姓名",
+        "外貌特征",
+        "身份",
+        "人际关系",
+        "别称",
+        "作者要求"
+      ],
+      "extraIndexColumnModes": {
+        "姓名": "both",
+        "外貌特征": "both",
+        "身份": "both",
+        "人际关系": "both",
+        "别称": "both",
+        "作者要求": "both"
+      },
+      "extraIndexInjectionTemplate": "以下为已经登场过的重要追踪角色：\n<重要追踪角色>\n$1\n</重要追踪角色>",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8000
+      },
+      "extraIndexPlacement": {
+        "position": "before_character_definition",
+        "depth": 10000,
+        "order": 8000
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 10000,
+        "order": 99983
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 10000,
+        "order": 99984
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "一句话定位",
+        "身份",
+        "外貌特征",
+        "核心行为逻辑",
+        "当前目标与顾虑",
+        "互动方式",
+        "关键过往摘要",
+        "所在地点",
+        "在场状态",
+        "人际关系",
+        "作者要求"
+      ],
+      "promptRowLimit": 12
+    },
+    "orderNo": 5
+  },
+  "sheet_bei_wang_lu_biao": {
+    "uid": "sheet_bei_wang_lu_biao",
+    "name": "备忘录表",
+    "sourceData": {
+      "note": "记录尚未归入其他表、但对后续剧情有用的具体事实；避免重复人物档案。\n分类为普通备忘、线索、事件、约定或其他。",
+      "initNode": "首次出现时依据明确剧情初始化「备忘录表」。未知值留空；遵守 DDL 约束。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「备忘录表」；普通退场或完成应改状态。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「备忘录表」；保留未被推翻的稳定事实。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「备忘录表」；不要预写未来或重复已有行。",
+      "ddl": "CREATE TABLE memo (row_id INTEGER PRIMARY KEY, title TEXT, category TEXT, archive_status TEXT, completion TEXT, record_date TEXT, content TEXT, involved_objects TEXT, keywords TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "标题",
+        "分类",
+        "归档状态",
+        "完成进度",
+        "记录日期",
+        "记录内容",
+        "涉及对象",
+        "关键要素"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM memo ORDER BY row_id ASC LIMIT 30\"]}",
+      "sendLatestRows": -1
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "备忘录表",
+      "entryType": "keyword",
+      "keywords": "关键要素,涉及对象",
+      "preventRecursion": true,
+      "injectionTemplate": "<备忘录note>\n$1\n</备忘录note>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "备忘录表-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 9990,
+        "order": 10020
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99992
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99993
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "标题",
+        "分类",
+        "记录内容",
+        "涉及对象"
+      ],
+      "promptRowLimit": 12
+    },
+    "orderNo": 6
+  },
+  "sheet_generic_tasks": {
+    "uid": "sheet_generic_tasks",
+    "name": "任务与约定",
+    "sourceData": {
+      "note": "记录明确提出的任务、承诺与约定。只更新已发生的进展；完成或失效后保留记录并改状态。",
+      "ddl": "CREATE TABLE narrative_tasks (row_id INTEGER PRIMARY KEY, title TEXT, task_type TEXT, parties TEXT, status TEXT, due_text TEXT, details TEXT, evidence_event TEXT);",
+      "initNode": "首次出现时依据明确剧情初始化「任务与约定」。未知值留空；遵守 DDL 约束。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「任务与约定」；不要预写未来或重复已有行。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「任务与约定」；保留未被推翻的稳定事实。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「任务与约定」；普通退场或完成应改状态。"
+    },
+    "content": [
+      [
+        "row_id",
+        "标题",
+        "类型",
+        "相关人物",
+        "状态",
+        "期限",
+        "具体内容",
+        "依据事件"
+      ]
+    ],
+    "updateConfig": {
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM narrative_tasks ORDER BY row_id ASC LIMIT 30\"]}",
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1
+    },
+    "exportConfig": {
+      "enabled": false,
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "标题",
+        "类型",
+        "相关人物",
+        "状态",
+        "具体内容"
+      ],
+      "promptRowLimit": 20
+    },
+    "orderNo": 7
+  },
+  "sheet_zhui_zong_shen_ti_ji_xian": {
+    "uid": "sheet_zhui_zong_shen_ti_ji_xian",
+    "name": "追踪身体基线",
+    "sourceData": {
+      "note": "仅在启用本模块且剧情有明确依据时更新。关联角色须已在 NPC 表登记；未知值留空。\n字段：姓名、别称、相貌、口腔、常用发型、肩颈腋窝、身高/体重、身材/特异性征、肌肤触感、身体气味、三围/罩杯、胸部外观、腰腹外观、外阴外观、阴道剖面、菊穴、臀部外观、腿部外观、足码/脚型、足部外观、泌乳与特殊体液、敏感部位。",
+      "initNode": "首次出现时依据明确剧情初始化「追踪身体基线」。未知值留空；遵守 DDL 约束。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「追踪身体基线」；不要预写未来或重复已有行。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「追踪身体基线」；保留未被推翻的稳定事实。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「追踪身体基线」；普通退场或完成应改状态。",
+      "ddl": "CREATE TABLE tracking_body_baseline (row_id INTEGER PRIMARY KEY, name TEXT, aliases TEXT, facial_appearance TEXT, oral_cavity TEXT, hairstyle TEXT, neck_shoulder_armpit TEXT, height_weight TEXT, body_special TEXT, skin_texture TEXT, body_scent TEXT, measurements TEXT, breast_appearance TEXT, waist_abdomen TEXT, vulva_appearance TEXT, vaginal_profile TEXT, anus_appearance TEXT, buttock_appearance TEXT, leg_appearance TEXT, foot_size TEXT, foot_appearance TEXT, lactation_body_fluid TEXT, sensitive_parts TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "别称",
+        "相貌",
+        "口腔",
+        "常用发型",
+        "肩颈腋窝",
+        "身高/体重",
+        "身材/特异性征",
+        "肌肤触感",
+        "身体气味",
+        "三围/罩杯",
+        "胸部外观",
+        "腰腹外观",
+        "外阴外观",
+        "阴道剖面",
+        "菊穴",
+        "臀部外观",
+        "腿部外观",
+        "足码/脚型",
+        "足部外观",
+        "泌乳与特殊体液",
+        "敏感部位"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM tracking_body_baseline ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "追踪身体基线",
+      "entryType": "keyword",
+      "keywords": "姓名,别称",
+      "preventRecursion": true,
+      "injectionTemplate": "<重要追踪角色身体基线>\n$1\n</重要追踪角色身体基线>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "追踪角色肉体表-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8500
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "别称",
+        "相貌",
+        "口腔",
+        "常用发型",
+        "肩颈腋窝",
+        "身高/体重",
+        "身材/特异性征",
+        "肌肤触感",
+        "身体气味",
+        "三围/罩杯",
+        "胸部外观",
+        "腰腹外观",
+        "外阴外观",
+        "阴道剖面",
+        "菊穴",
+        "臀部外观",
+        "腿部外观",
+        "足码/脚型",
+        "足部外观",
+        "泌乳与特殊体液",
+        "敏感部位"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 8
+  },
+  "sheet_lin_chang_yi_wu_zhuang_tai": {
+    "uid": "sheet_lin_chang_yi_wu_zhuang_tai",
+    "name": "临场衣物状态",
+    "sourceData": {
+      "note": "记录当前场景中在场角色的实时衣着白描状态。\n【当前状态强制要求】\n登场：当新类雌性（女性、男娘、扶她）角色进入视线时，必须立即为其创建条目，记录其登场状态。\n后续更新：详细记录该角色当前动作姿势/衣物状态，严禁使用模糊情绪词。\n离场处理：当该角色离场时，删除其对应条目。\n<if sql=\"SELECT 1 FROM 主角信息 WHERE 性别 = '女' OR 性别 = '特殊'\">由于主角信息表中 gender = '女' 或 '特殊'，本表应为其以相同基准稳定维护一份条目。</if>\n【临场衣物状态】/【临场肉体状态】分工：\n衣物表以衣物为主体，白描衣物时偶尔提及肉体，对性行为部位仅白描对应衣物状态；肉体侧重描写属于肉体表职能。\n\n【列定义】\n列1=姓名：全表唯一\n列2=当前动作姿势：角色当前正在做的具体动作和身体姿态。\n列3=面覆：头纱、面纱、眼罩、眼镜、口球、口罩、耳环、发饰等头部面部装饰物。\n列4=颈饰：项圈、choker、领带、丝巾、项链等颈部佩戴物。\n列5=上装\n列6=手饰：手套、戒指、指套、手链、臂环等手部与前臂装饰物。\n列7=下装：躯干下部衣着，含腰带、腰封、束腰、腰链。\n列8=内衣\n列9=内裤\n列10=袜子和腿脚装饰物：各种袜、腿环、足链等。鞋子内无法直接观察时仍详细畅想描述细节。\n列11=鞋子\n\n【衣物穿戴情况】\n以上衣物列，原先未穿戴则则填\"无\"，当前无法观察到也填\"无\"，袜子与腿脚装饰物列任何情况均必须描写；\n已脱下则填“{衣物}，已褪下，{位置与状态}”（置于床榻/搭在椅背/落在脚边等位置，撕碎/凌乱/整齐/脏污/湿透等状态），详细白描褪下衣物展现出的经历，衣物脱下后仅描写衣物本身，对应身体部位描写交给【临场肉体状态】表；\n衣物描写需符合当前世界观，例：古风世界观使用亵衣、小衣、肚兜代替胸罩，内部真空的亵裤替代下装、内裤、安全裤。\n\n【禁止内容】\n禁止写：极端情绪、夸张、比喻、升华、支配欲、掌控欲。\n\n【白描硬规则】本表所有列只允许写客观可观察的物理事实，禁止任何主观评价、因果推断、功能解读、抒情文学修饰或总结性收束。\n判断标准：这段话是否可被摄像头原样拍下来？如果包含了摄像头拍不到的东西（感受、评价、暗示意义），就是违规。\n\n【衣着部位强制白描规范——最高优先级】\n严禁使用任何模糊概括与简单词汇！衣物状态条目的新增与更新，仅使用具象的白描手法！若违背以下规范，视为严重错误！\n<if cond=\"db:global_state.count() == 0\">\n【首轮模式】本轮根据当前剧情氛围为SFW还是NSFW，自行判断使用「日常模式」或「色色模式」生成条目。以下是两种模式的完整基准，请严格参照。\n日常模式：衣着描写以性暗示为主。刻画衣着对体态的勾勒、材质贴肤的质感、动作间走光与布料位移的暧昧瞬间。用隐藏的内容制造张力，而非直白暴露。禁止直接描写性器官、体液或赤裸的性细节。\n色色模式：使用具象、色情、露骨的白描手法。\n【状态逻辑自洽】体液泛滥程度必须严格符合当前剧情的实际进度与角色的真实生理状态。体液的积攒、布料的破坏必须是一个随着性爱强度逐渐递增的合理过程。严禁无视当前阶段与角色体质直接输出终极高潮状态的描写。 \n【材质与破坏】明确写出具体的材质、款式与颜色。日常模式刻画衣着贴合身体的微妙细节；色色模式详细刻画布料在动作中遭受的物理破坏。\n【体液污染质变】日常模式写薄汗微湿的暧昧质感；色色模式详细描写衣物被汗水、浓稠爱液、精液或润滑液浸透的过程。\n【强制字数要求】每次更新，每个未褪下衣物的描述大于20字（日常模式）或35字（色色模式），同列存在多件衣物分别褪下/穿戴时进行分别表述。</if> <if cond=\"db:global_state.where('row_id',1).get('nsfw') == '是'\">本轮符合【色色模式】标准，以具象、色情、露骨的白描手法，按示例基准执行。\n【状态逻辑自洽】体液泛滥程度必须严格符合当前剧情的实际进度与角色的真实生理状态。体液的积攒、布料的破坏必须是一个随着性爱强度逐渐递增的合理过程。严禁无视当前阶段与角色体质直接输出终极高潮状态的描写。 \n【材质与破坏】明确写出具体的材质、款式与颜色。色色模式详细刻画布料在动作中遭受的物理破坏。\n【体液污染质变】色色模式详细描写衣物被汗水、浓稠爱液、精液或润滑液浸透的过程。\n【强制字数要求】每次更新，每个未褪下衣物列的描述大于35字，同列存在多件衣物分别褪下/穿戴时进行分别表述。</if><if cond=\"db:global_state.where('row_id',1).get('nsfw') == '否'\">本轮符合【日常模式】标准，衣着描写以性暗示为主。重点刻画衣着对体态的勾勒、材质贴肤的质感、动作间走光与布料位移的暧昧瞬间。用隐藏的内容制造张力，而非直白暴露。禁止直接描写性器官、体液或赤裸的性细节。\n【材质与破坏】明确写出具体的材质、款式与颜色。\n【体液污染质变】日常模式主写薄汗微湿的暧昧质感。\n【强制字数要求】日常模式下每次更新，每个未褪下衣物的描述大于20字，若同列多件衣物分别褪下/穿戴则分别表述。</if>",
+      "initNode": "首次出现时依据明确剧情初始化「临场衣物状态」。未知值留空；遵守 DDL 约束。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「临场衣物状态」；不要预写未来或重复已有行。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「临场衣物状态」；保留未被推翻的稳定事实。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「临场衣物状态」；普通退场或完成应改状态。",
+      "ddl": "CREATE TABLE scene_outfit_status (row_id INTEGER PRIMARY KEY, name TEXT, current_action TEXT, face_cover TEXT, neck_accessory TEXT, top_wear TEXT, hand_accessory TEXT, bottom_wear TEXT, inner_wear TEXT, panties TEXT, leg_wear TEXT, shoes TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "当前动作姿势",
+        "面覆",
+        "颈饰",
+        "上装",
+        "手饰",
+        "下装",
+        "内衣",
+        "内裤",
+        "袜子和腿脚装饰物",
+        "鞋子"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM scene_outfit_status ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "临场衣物状态",
+      "entryType": "keyword",
+      "keywords": "姓名",
+      "preventRecursion": true,
+      "injectionTemplate": "<scene_outfit_status>\n$1\n</scene_outfit_status>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "临场衣物状态-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8700
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "当前动作姿势",
+        "面覆",
+        "颈饰",
+        "上装",
+        "手饰",
+        "下装",
+        "内衣",
+        "内裤",
+        "袜子和腿脚装饰物",
+        "鞋子"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 9
+  }
+}

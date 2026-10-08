@@ -53,6 +53,7 @@ import { createWorldSimulationCompletionIntentForCurrentChat_ACU, getWorldSimula
 import { autoEnableFlightModeForNewChatIfNeeded_ACU } from '../../service/fill-mode/fill-mode-auto-enable';
 import { ensureCurrentChatFillModeRecorded_ACU } from '../../service/fill-mode/fill-mode-chat-switch';
 import { getVectorPipelinePlanForCurrentChat_ACU, isVectorPipelineEnabledForCurrentChat_ACU } from '../../service/fill-mode/fill-mode-gate';
+import { clearGenericNarrativePrompt_ACU, refreshGenericNarrativePrompt_ACU } from '../../service/runtime/generic-narrative-injection';
 
 
 // [从 state-manager.ts 搬入 presentation 层] 安装发送意图捕捉钩子（DOM 事件绑定）
@@ -244,6 +245,7 @@ export   function mainInitialize_ACU() {
         }, 60_000);
 
         SillyTavern_API_ACU.eventSource.on(SillyTavern_API_ACU.eventTypes.CHAT_CHANGED, async (chatFileName: string) => {
+          void clearGenericNarrativePrompt_ACU();
           ++autoFillChatEpoch;
           logDebug_ACU(`ACU CHAT_CHANGED event: ${chatFileName}`);
 
@@ -727,6 +729,10 @@ export   function mainInitialize_ACU() {
         if (SillyTavern_API_ACU.eventTypes.GENERATION_AFTER_COMMANDS) {
           const source = SillyTavern_API_ACU.eventSource;
           const eventType = SillyTavern_API_ACU.eventTypes.GENERATION_AFTER_COMMANDS;
+          source.on(eventType, async (_type: any, _params: any, dryRun: any) => {
+            if (dryRun) return;
+            await refreshGenericNarrativePrompt_ACU();
+          });
           type VectorSend = {
             chat: any[]; chatKey: string; isolationKey: string; messageIndex: number;
             awaitUserMessage: boolean;

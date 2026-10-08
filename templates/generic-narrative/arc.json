@@ -1,0 +1,310 @@
+{
+  "sheet_zhui_zong_ren_she_ji_xian": {
+    "uid": "sheet_zhui_zong_ren_she_ji_xian",
+    "name": "追踪人设基线",
+    "sourceData": {
+      "note": "角色晋升时记录其已知的初始履历、稳定行为原则和说话边界；建档后冻结，未知留空。",
+      "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
+      "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
+      "updateNode": "<if cond=\"db:tracking_character_sheet.exists()\">禁止。本表记录初始性格基线，建档即锁定。\n性格词汇、衍生、用语把捉、他者声部、作者声部永久锁定。\n唯一例外：姓名、别称：与【追踪角色表当前数据】中的对应列保持一致。\nSQL示例(同步姓名): UPDATE tracking_character_sheet SET name = '陈望秋' WHERE name = '老陈';<else>禁止更新（本表目前为空）。</if>",
+      "deleteNode": "<if cond=\"db:second_npc.whereIn('role_profile', ['待降级', '待删除']).exists()\">当追踪角色表中存在 role_profile = '待降级' 或 '待删除' 的角色时，同步删除本表对应条目。<else>角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。\nSQL示例: DELETE FROM tracking_character_sheet WHERE name IN (SELECT name FROM second_npc WHERE role_profile IN ('待降级', '待删除'));\n本轮无删除需求。</if>",
+      "ddl": "CREATE TABLE tracking_character_sheet (row_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, aliases TEXT, biography TEXT, stable_behavior TEXT, voice_and_boundaries TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "别称",
+        "初始履历",
+        "稳定行为原则",
+        "说话方式与边界"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": 2,
+      "sendRowsSqlTemplate": "{[sql \"SELECT row_id, name, aliases, biography, stable_behavior, voice_and_boundaries FROM tracking_character_sheet ORDER BY row_id ASC\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "追踪人设基线",
+      "entryType": "keyword",
+      "keywords": "姓名,别称",
+      "preventRecursion": true,
+      "injectionTemplate": "<重要追踪角色人设基线>\n$1\n</重要追踪角色人设基线>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "追踪角色初设表-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8200
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "别称",
+        "初始履历",
+        "稳定行为原则",
+        "说话方式与边界"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 7
+  },
+  "sheet_zhui_zong_da_shi_ji": {
+    "uid": "sheet_zhui_zong_da_shi_ji",
+    "name": "追踪大事记",
+    "sourceData": {
+      "note": "记录追踪角色经历的重要事件及其可验证的后果，不与纪要表逐字重复。",
+      "initNode": "首次出现时依据明确剧情初始化「追踪大事记」。未知值留空；遵守 DDL 约束。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「追踪大事记」；不要预写未来或重复已有行。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「追踪大事记」；保留未被推翻的稳定事实。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「追踪大事记」；普通退场或完成应改状态。",
+      "ddl": "CREATE TABLE tracking_chronicle (row_id INTEGER PRIMARY KEY, writer TEXT, aliases TEXT, content TEXT, event_time TEXT, core_memory TEXT, today_relation TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "记录者",
+        "别称",
+        "记录内容",
+        "发生时间",
+        "核心记忆",
+        "与今天的关系"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM tracking_chronicle ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "追踪大事记",
+      "entryType": "keyword",
+      "keywords": "记录者,别称",
+      "preventRecursion": true,
+      "injectionTemplate": "<重要追踪角色核心记忆>\n$1\n</重要追踪角色核心记忆>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "追踪角色大事记-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8100
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "记录者",
+        "别称",
+        "记录内容",
+        "发生时间",
+        "核心记忆",
+        "与今天的关系"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 8
+  },
+  "sheet_zhui_zong_ren_she_pian_yi": {
+    "uid": "sheet_zhui_zong_ren_she_pian_yi",
+    "name": "追踪人设偏移",
+    "sourceData": {
+      "note": "只记录有明确事件依据、持续多轮的阶段变化；单轮心情不入表。",
+      "initNode": "本轮初始化触发条件以NOTE与INSERT条件为准。",
+      "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
+      "updateNode": "<if sql=\"SELECT 1 FROM second_npc\"> 以 name 为唯一键。仅在该角色的大事记表INSERT新条目时，同步UPDATE本表。更新时只写发生变化的部分，未变化的列保持原值。具体写作格式与偏移思考逻辑同Insert触发。<else> 本轮追踪角色表为空，本表禁止 UPDATE。</if>",
+      "deleteNode": "{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\" as names_to_delete]}\n<if cond=\"v:names_to_delete != ''\">以下角色在追踪角色表中已不存在（被降级或删除），同步删除本表对应条目：\n{[sql \"SELECT name FROM tracking_character_dynamic WHERE name NOT IN (SELECT name FROM second_npc)\"]}\nSQL示例: DELETE FROM tracking_character_dynamic WHERE name = '老陈';\n<else>本轮禁止删除任意表。</if>\n角色死亡不删除，在姓名旁标注\"(已死亡)\"后保留。",
+      "ddl": "CREATE TABLE tracking_character_dynamic (row_id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, cause_event TEXT, stage_change TEXT, observable_effect TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "姓名",
+        "触发事件",
+        "阶段性变化",
+        "可观察的言行影响"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": 10,
+      "updateFrequency": 10,
+      "batchSize": 10,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": 2,
+      "sendRowsSqlTemplate": "{[sql \"SELECT row_id, name, cause_event, stage_change, observable_effect FROM tracking_character_dynamic ORDER BY row_id ASC\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": true,
+      "entryName": "追踪人设偏移",
+      "entryType": "keyword",
+      "keywords": "姓名,别称",
+      "preventRecursion": true,
+      "injectionTemplate": "<重要追踪角色近期性格状态>\n$1\n</重要追踪角色近期性格状态>",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "追踪角色动态性格-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "after_character_definition",
+        "depth": 2,
+        "order": 8300
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "姓名",
+        "触发事件",
+        "阶段性变化",
+        "可观察的言行影响"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 9
+  },
+  "sheet_xiao_ri_ji_biao": {
+    "uid": "sheet_xiao_ri_ji_biao",
+    "name": "小日记表",
+    "sourceData": {
+      "note": "仅在启用本模块且剧情有明确依据时更新。关联角色须已在 NPC 表登记；未知值留空。\n字段：日期、角色、内容。",
+      "initNode": "首次出现时依据明确剧情初始化「小日记表」。未知值留空；遵守 DDL 约束。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「小日记表」；不要预写未来或重复已有行。",
+      "updateNode": "仅在已有事实改变且有剧情依据时更新「小日记表」；保留未被推翻的稳定事实。",
+      "deleteNode": "仅在用户明确要求或原记录确属错误时删除「小日记表」；普通退场或完成应改状态。",
+      "ddl": "CREATE TABLE npc_diary_entries (row_id INTEGER PRIMARY KEY, diary_date TEXT, name TEXT, diary_content TEXT);"
+    },
+    "content": [
+      [
+        "row_id",
+        "日期",
+        "角色",
+        "内容"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "sendLatestRows": -1,
+      "groupId": -1,
+      "sendRowsSqlTemplate": "{[sql \"SELECT * FROM npc_diary_entries ORDER BY row_id ASC LIMIT 30\"]}"
+    },
+    "exportConfig": {
+      "enabled": false,
+      "splitByRow": false,
+      "entryName": "小日记表",
+      "entryType": "constant",
+      "keywords": "",
+      "preventRecursion": true,
+      "injectionTemplate": "",
+      "extraIndexEnabled": false,
+      "extraIndexEntryName": "小日记表-索引",
+      "extraIndexColumns": [],
+      "extraIndexColumnModes": {},
+      "extraIndexInjectionTemplate": "",
+      "sqlInjectionTemplate": "",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10000
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 10010
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99990
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 2,
+        "order": 99991
+      },
+      "injectIntoWorldbook": false,
+      "delivery": "chat_prompt",
+      "promptColumns": [
+        "日期",
+        "角色",
+        "内容"
+      ],
+      "promptRowLimit": 8
+    },
+    "orderNo": 18
+  }
+}

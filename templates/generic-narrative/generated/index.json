@@ -1,0 +1,130 @@
+{
+  "通用叙事·核心": {
+    "file": "0000.json",
+    "modules": [
+      "core"
+    ]
+  },
+  "通用叙事·核心＋角色弧光": {
+    "file": "0001.json",
+    "modules": [
+      "core",
+      "arc"
+    ]
+  },
+  "通用叙事·核心＋冒险世界": {
+    "file": "0010.json",
+    "modules": [
+      "core",
+      "adventure"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋冒险世界": {
+    "file": "0011.json",
+    "modules": [
+      "core",
+      "arc",
+      "adventure"
+    ]
+  },
+  "通用叙事·核心＋场景连续性": {
+    "file": "0100.json",
+    "modules": [
+      "core",
+      "continuity"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋场景连续性": {
+    "file": "0101.json",
+    "modules": [
+      "core",
+      "arc",
+      "continuity"
+    ]
+  },
+  "通用叙事·核心＋冒险世界＋场景连续性": {
+    "file": "0110.json",
+    "modules": [
+      "core",
+      "adventure",
+      "continuity"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋冒险世界＋场景连续性": {
+    "file": "0111.json",
+    "modules": [
+      "core",
+      "arc",
+      "adventure",
+      "continuity"
+    ]
+  },
+  "通用叙事·核心＋成人题材": {
+    "file": "1000.json",
+    "modules": [
+      "core",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋成人题材": {
+    "file": "1001.json",
+    "modules": [
+      "core",
+      "arc",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋冒险世界＋成人题材": {
+    "file": "1010.json",
+    "modules": [
+      "core",
+      "adventure",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋冒险世界＋成人题材": {
+    "file": "1011.json",
+    "modules": [
+      "core",
+      "arc",
+      "adventure",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋场景连续性＋成人题材": {
+    "file": "1100.json",
+    "modules": [
+      "core",
+      "continuity",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋场景连续性＋成人题材": {
+    "file": "1101.json",
+    "modules": [
+      "core",
+      "arc",
+      "continuity",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋冒险世界＋场景连续性＋成人题材": {
+    "file": "1110.json",
+    "modules": [
+      "core",
+      "adventure",
+      "continuity",
+      "adult"
+    ]
+  },
+  "通用叙事·核心＋角色弧光＋冒险世界＋场景连续性＋成人题材": {
+    "file": "1111.json",
+    "modules": [
+      "core",
+      "arc",
+      "adventure",
+      "continuity",
+      "adult"
+    ]
+  }
+}
