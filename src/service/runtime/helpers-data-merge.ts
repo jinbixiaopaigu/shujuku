@@ -157,7 +157,11 @@ export function migrateContentNullToRowId(data: Record<string, any> | null): Rec
                       const guideHeaderValid = !guideHeader || String(guideHeader[0] ?? '') === 'row_id';
                       const hasOverwideRow = !!guideHeader && Array.isArray(next.content)
                           && next.content.slice(1).some((row: unknown) => Array.isArray(row) && row.length > guideHeader.length);
-                      if (!guideHeaderValid || hasOverwideRow) {
+                      // legacy guide 只可在原有列顺序不变时向末尾追加列。即使数据行较短，
+                      // 覆盖已改名/删除的历史表头也会让旧数据配上新 DDL，hydrate 时丢列或错列。
+                      const changesExistingHeader = !!guideHeader && !!histHeader
+                          && histHeader.some((header: unknown, index: number) => String(header ?? '') !== String(guideHeader[index] ?? ''));
+                      if (!guideHeaderValid || hasOverwideRow || changesExistingHeader) {
                           if (!Array.isArray(next.content) || next.content.length === 0) {
                               next.content = [histHeader || ['row_id']];
                           }
@@ -170,7 +174,9 @@ export function migrateContentNullToRowId(data: Record<string, any> | null): Rec
                           if (Array.isArray(guideSheet?.seedRows)) next.seedRows = JSON.parse(JSON.stringify(guideSheet.seedRows));
                           const reason = !guideHeaderValid
                               ? `Sheet Guide 表头缺少 row_id 首列`
-                              : `历史行宽度（最大 ${Math.max(...next.content.slice(1).map((row: unknown) => Array.isArray(row) ? row.length : 0))} 列）超过 Sheet Guide 表头（${guideHeader!.length} 列）`;
+                              : changesExistingHeader
+                                  ? `Sheet Guide 更改或删除了历史表头列`
+                                  : `历史行宽度（最大 ${Math.max(...next.content.slice(1).map((row: unknown) => Array.isArray(row) ? row.length : 0))} 列）超过 Sheet Guide 表头（${guideHeader!.length} 列）`;
                           const msg = `[Merge] 表「${String(next.name || guideSheet?.name || k)}」(${k}) ${reason}，`
                               + `已降级保留历史结构（数据行不截断、不丢弃）。如需变更列结构，请通过模板提交完成迁移。`;
                           logWarn_ACU(msg);

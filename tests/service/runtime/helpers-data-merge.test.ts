@@ -821,6 +821,28 @@ describe('mergeAllIndependentTables_ACU', () => {
     expect(logWarn_ACU).toHaveBeenCalledWith(expect.stringContaining('已降级保留历史结构'));
   });
 
+  it('legacy-v1 guide 同宽替换旧列时保留历史表头和 DDL', async () => {
+    mockLegacyChatWithGuide({
+      sheet_global: {
+        uid: 'sheet_global', name: '全局数据表',
+        sourceData: { ddl: 'create table sheet_global (row_id integer primary key, global_status text);' },
+        content: [['row_id', '全局状态'], ['1', '旧世界状态']],
+      },
+    }, {
+      sheet_global: {
+        uid: 'sheet_global', name: '全局数据表',
+        sourceData: { ddl: 'create table sheet_global (row_id integer primary key, scene_text text);' },
+        content: [['row_id', '当前场景']],
+      },
+    });
+
+    const result = await mergeAllIndependentTables_ACU();
+
+    expect(result!.sheet_global.content).toEqual([['row_id', '全局状态'], ['1', '旧世界状态']]);
+    expect(result!.sheet_global.sourceData.ddl).toContain('global_status');
+    expect(logWarn_ACU).toHaveBeenCalledWith(expect.stringContaining('更改或删除了历史表头列'));
+  });
+
   it('legacy-v1 历史行短于 guide 表头：padding 语义不回归（guide 结构权正常路径）', async () => {
     mockLegacyChatWithGuide({
       sheet_bag: {
