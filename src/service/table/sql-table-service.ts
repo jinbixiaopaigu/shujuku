@@ -52,6 +52,7 @@ import { allocateStableRowId_ACU, createStableRowIdReservation_ACU } from '../..
 import { extractBusinessKeyColumns_ACU } from '../template/template-data-preflight';
 import { getTableLockIdentitiesForSheet_ACU } from '../runtime/helpers-table-lock';
 import { buildLockRevertPlanForSheet_ACU, formatLockRevertSummary_ACU, type LockRevertItem_ACU } from './table-lock-enforcement';
+import { normalizeGenericNarrativeLegacyRoleStatus_ACU } from './generic-narrative-legacy-status';
 
 export interface SnapshotSqlApplyResult_ACU extends ApplyEditsResult {
   workingData?: TableDataObject_ACU;
@@ -1516,6 +1517,7 @@ export class SqlTableService implements ITableStorageProvider {
     error?: string;
   }> {
     const mergedData = data ? JSON.parse(JSON.stringify(data)) as TableDataObject_ACU : null;
+    if (mergedData) normalizeGenericNarrativeLegacyRoleStatus_ACU(mergedData);
     this._resetRuntimeForLoad_ACU();
     if (this.isolatedRuntime_ACU && !mergedData) {
       return { loaded: false, source: 'empty', error: 'isolated_snapshot_required' };

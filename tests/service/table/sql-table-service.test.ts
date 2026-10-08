@@ -1349,6 +1349,32 @@ describe('SqlTableService', () => {
     try { service?.dispose(); } catch (_) {}
   });
 
+  it('历史 NPC 与追踪角色旧分类在新 CHECK 下可载入，原快照保持不变', async () => {
+    const historical: any = {
+      mate: { type: 'acu', version: 1 },
+      sheet_npc_biao: {
+        uid: 'npc', name: 'NPC表', orderNo: 0,
+        sourceData: { ddl: "CREATE TABLE npcbiao (\n row_id INTEGER PRIMARY KEY, -- 行号\n name TEXT, -- 姓名\n archive_status TEXT CHECK(archive_status IN ('普通角色', '追踪角色', '退场角色', '删除角色')) -- 归档状态\n);" },
+        content: [['row_id', '姓名', '归档状态'], ['1', '角色甲', '新生角色N类']],
+        updateConfig: {}, exportConfig: {},
+      },
+      sheet_zhui_zong_jue_se_biao: {
+        uid: 'tracked', name: '追踪角色表', orderNo: 1,
+        sourceData: { ddl: "CREATE TABLE second_npc (\n row_id INTEGER PRIMARY KEY, -- 行号\n name TEXT, -- 姓名\n role_profile TEXT CHECK(role_profile = '追踪角色'), -- 角色定位\n brief_intro TEXT -- 一句话定位\n);" },
+        content: [['row_id', '姓名', '角色定位', '一句话定位'], ['1', '角色甲', '辅助AI', '']],
+        updateConfig: {}, exportConfig: {},
+      },
+    };
+    const loaded = await service.loadFromData(historical);
+    expect(loaded.error).toBeUndefined();
+    expect(loaded.loaded).toBe(true);
+    const data = service.getCurrentData() as any;
+    expect(data.sheet_npc_biao.content[1][2]).toBe('追踪角色');
+    expect(data.sheet_zhui_zong_jue_se_biao.content[1][2]).toBe('追踪角色');
+    expect(data.sheet_zhui_zong_jue_se_biao.content[1][3]).toBe('辅助AI');
+    expect(historical.sheet_npc_biao.content[1][2]).toBe('新生角色N类');
+  });
+
   // ═══════════════════════════════════════════════════════════════
   // _ensureInitialized（通过公开方法间接测试）
   // ═══════════════════════════════════════════════════════════════

@@ -50,6 +50,7 @@ import {
   type TableFillStagingRunContext_ACU,
 } from './table-fill-boundary-staging';
 import { createTableFillStagingSession_ACU, type TableFillStagingSession_ACU } from './table-fill-staging-session';
+import { normalizeGenericNarrativeLegacyRoleStatus_ACU } from './generic-narrative-legacy-status';
 import { getTableDataFingerprint_ACU } from './table-data-upgrade-audit';
 
 import { isSummaryOrOutlineTable_ACU, logDebug_ACU, logError_ACU, logWarn_ACU, parseTableTemplateJson_ACU } from '../../shared/utils';
@@ -1047,6 +1048,7 @@ function mergeGuideStructureIntoBaseData_ACU(data: Record<string, any>): Record<
             base[sheetKey] = JSON.parse(JSON.stringify(guideBase[sheetKey]));
         }
     });
+    normalizeGenericNarrativeLegacyRoleStatus_ACU(base);
     return base;
 }
 
