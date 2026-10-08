@@ -2081,6 +2081,36 @@ describe('SqlTableService', () => {
       ]);
 
     });
+    it('请求前补齐模板缺失表后冻结 schema，首组写入不会使后续组误报漂移', () => {
+      mockGetCurrentChatTemplateScopeState.mockReturnValue({
+        mode: 'chat_override',
+        templateStr: JSON.stringify({
+          mate: { type: 'acu', version: 1 },
+          sheet_0: {
+            uid: 'inventory', name: 'inventory', sourceData: { ddl: TEST_DDL },
+            content: [['row_id', 'item_name', 'quantity']],
+            updateConfig: {}, exportConfig: {}, orderNo: 0,
+          },
+          sheet_1: {
+            uid: 'notes', name: 'notes',
+            sourceData: { ddl: 'CREATE TABLE notes (row_id INTEGER PRIMARY KEY, detail TEXT);' },
+            content: [['row_id', 'detail'], ['1', '模板自带记录']],
+            updateConfig: {}, exportConfig: {}, orderNo: 1,
+          },
+        }),
+      });
+      const templateScope = captureSqlTableApplyScope_ACU({ chat: [], isolationKey: 'preflight' });
+      expect(() => service.executeQuery('SELECT * FROM notes')).toThrow();
+      service.prepareRuntimeSchemaForFill(templateScope);
+      expect(service.executeQuery('SELECT * FROM notes').rowCount).toBe(1);
+      const runtimeData = service.getCurrentData() as any;
+      const scope = captureSqlTableApplyScope_ACU({ chat: [], isolationKey: 'preflight', runtimeData });
+      expect(scope.runtimeSchema?.sheetKeys).toEqual(['sheet_0', 'sheet_1']);
+      expect(service.applyEditsWithSystemRowIds([
+        "INSERT INTO inventory (item_name, quantity) VALUES ('预检后写入', 1);",
+      ], 'auto_standard', scope).success).toBe(true);
+    });
+
     it('冻结 schema 与 live SQLite 一致时正常执行（runtime schema digest 一致路径）', async () => {
       mockGetCurrentChatTemplateScopeState.mockReturnValue({
         mode: 'chat_override',

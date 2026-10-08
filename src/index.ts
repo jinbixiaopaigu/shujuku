@@ -74,6 +74,7 @@ import './presentation/triggers/settings-ui-sync';
 // ═══════════════════════════════════════════════════════════════
 import { mainInitialize_ACU } from './presentation/bootstrap/init';
 import { bootstrapAcuV2 } from './presentation-v2/bootstrap';
+import { installChatWorldReference_ACU } from './presentation/components/chat-world-reference';
 
 // jQuery ready 回调
 declare const $: any;
@@ -86,4 +87,5 @@ $(function() {
     console.log('ACU_INIT_DEBUG: Document is ready, attempting to initialize ACU script (Userscript mode).');
     mainInitialize_ACU();
     bootstrapAcuV2();
+    installChatWorldReference_ACU();
 });

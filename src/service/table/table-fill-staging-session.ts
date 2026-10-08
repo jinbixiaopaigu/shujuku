@@ -6,6 +6,7 @@ import { parseAndApplyTableEditsToData_ACU } from '../ai/prompt-builder';
 import { getCurrentStorageMode, isSqliteMode } from './storage-mode';
 import { createDetachedSqlTableService_ACU } from './table-storage-strategy';
 import type { SqlTableService } from './sql-table-service';
+import { freezeRuntimeSchemaFromData_ACU, SqlRuntimeSchemaInvalidError_ACU } from './sql-table-service';
 import {
   assembleBucketWorkingView_ACU,
   mergeTargetOverlayFromBucket_ACU,
@@ -111,10 +112,30 @@ export function createTableFillStagingSession_ACU(
           }
           const stale = assertScope('afterLoad');
           if (stale) { await releaseDetached(); return stale; }
+          // stage_only 的写入目标是刚从历史基底重建的 detached runtime。
+          // 请求前冻结的是当前聊天 live runtime，不能拿它校验历史库的 schema。
+          // 在 detached 建表完成后冻结它自己的结构，仍保持写入前的 fail-closed gate。
+          let stagedSqlApplyScope = input.sqlApplyScope;
+          if (stagedSqlApplyScope) {
+            detachedProvider.prepareRuntimeSchemaForFill(stagedSqlApplyScope);
+            const detachedData = detachedProvider.getCurrentData();
+            const detachedSchema = freezeRuntimeSchemaFromData_ACU(
+              detachedData,
+              new Set(stagedSqlApplyScope.activeSheetKeys),
+            );
+            if (!detachedData || !detachedSchema) {
+              throw new SqlRuntimeSchemaInvalidError_ACU('staging SQLite 无法冻结独立运行时 schema，已阻止写入。');
+            }
+            stagedSqlApplyScope = {
+              ...stagedSqlApplyScope,
+              runtimeData: detachedData,
+              runtimeSchema: detachedSchema,
+            };
+          }
           const parseResult = detachedProvider.applyEditsWithSystemRowIds(
             input.sqlTexts,
             input.updateMode,
-            input.sqlApplyScope,
+            stagedSqlApplyScope,
           );
           if (!parseResult?.success || !parseResult.tableData) {
             await releaseDetached();

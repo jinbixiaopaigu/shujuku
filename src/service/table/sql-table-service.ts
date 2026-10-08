@@ -1684,6 +1684,11 @@ export class SqlTableService implements ITableStorageProvider {
     }
   }
 
+  prepareRuntimeSchemaForFill(scope: SqlTableApplyScope_ACU): void {
+    this._ensureInitialized();
+    this._ensureTablesFromTemplate(scope);
+  }
+
   /**
    * 应用 AI 返回的 SQL 编辑指令
    * 1. 拆分多条 SQL 语句

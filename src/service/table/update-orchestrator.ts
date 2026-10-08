@@ -564,6 +564,10 @@ async function captureFillExecutionScope_ACU(
             if (provider.mode !== 'sqlite') {
                 runtimeSchemaFailure = { code: 'provider_unavailable', message: 'SQLite 模式需要 SQLite provider，当前未就绪。' };
             } else {
+                // 缺失的可选模块表必须先建好再冻结 schema。否则第一组提交时按需建表，
+                // 同轮其他组会误判为 AI 等待期间 schema 漂移而全部拒写。
+                const templateScopeForPrepare = captureSqlTableApplyScope_ACU({ chat: liveChat, isolationKey });
+                provider.prepareRuntimeSchemaForFill?.(templateScopeForPrepare);
                 runtimeData = provider.getCurrentData();
                 if (!runtimeData) {
                     runtimeSchemaFailure = { code: 'SQL_RUNTIME_SCHEMA_INVALID_ACU', message: 'SQLite runtime 未导出表格数据，无法冻结 schema。' };

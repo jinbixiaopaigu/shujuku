@@ -34,6 +34,8 @@ const detachedSql = vi.hoisted(() => ({
     },
   })),
   isReady: vi.fn(() => true),
+  prepareRuntimeSchemaForFill: vi.fn(),
+  getCurrentData: vi.fn(),
   dispose: vi.fn(),
 }));
 
@@ -135,6 +137,44 @@ describe('TableFillStagingSession', () => {
     expect(Object.keys(session.getTargetOverlay().sheets)).toEqual(['sheet_b']);
     expect(session.getTargetOverlay().sheets.sheet_b.content[1][1]).toBe('from-sql');
     expect(session.getTargetOverlay().sheets.sheet_a).toBeUndefined();
+    await session.discard();
+  });
+
+  it('staging 用历史独立库的 schema 冻结视图，不沿用 live runtime 的指纹', async () => {
+    mocks.sqlite = true;
+    const historical = {
+      mate: { type: 'acu', version: 1 },
+      sheet_b: { uid: 'B', name: 'B', content: [['row_id', '值']] },
+    };
+    const detachedData = structuredClone(historical) as any;
+    Object.defineProperty(detachedData.sheet_b, '_acu_runtimeEffectiveSchema', {
+      value: { effectiveDDL: 'CREATE TABLE B (row_id INTEGER PRIMARY KEY, value TEXT)', columnMap: { mappings: [] } },
+      enumerable: false,
+    });
+    detachedSql.getCurrentData.mockReturnValue(detachedData);
+    detachedSql.prepareRuntimeSchemaForFill.mockClear();
+    detachedSql.applyEditsWithSystemRowIds.mockClear();
+    const run = createTableFillStagingRunContext_ACU({
+      runId: 'historical-schema', chatKey: 'session-chat', isolationKey: '',
+      targetSheetKeys: ['sheet_b'], originalFullIndex: 100, templateFingerprint: 'tpl',
+    });
+    const session = createTableFillStagingSession_ACU(run);
+    const liveScope = {
+      isolationKey: '', templateData: historical, templateDataWithRows: historical,
+      activeSheetKeys: ['sheet_b'], skippedSheets: [],
+      runtimeSchema: { bySheetKey: new Map(), sheetKeys: ['sheet_b'], digest: 'live-schema-differs' },
+      runtimeData: historical,
+    } as any;
+    const result = await session.applyBucket({
+      historicalBase: historical, saveTargetIndex: 80, updateMode: 'auto_standard',
+      sqlTexts: ["UPDATE B SET value = 'from-sql' WHERE row_id = 1;"], sqlApplyScope: liveScope,
+    });
+    expect(result.ok).toBe(true);
+    expect(detachedSql.prepareRuntimeSchemaForFill).toHaveBeenCalledWith(liveScope);
+    const appliedScope = detachedSql.applyEditsWithSystemRowIds.mock.calls.at(-1)?.[2] as any;
+    expect(appliedScope.runtimeSchema.digest).toBeTruthy();
+    expect(appliedScope.runtimeSchema.digest).not.toBe('live-schema-differs');
+    expect(appliedScope.runtimeData).toBe(detachedData);
     await session.discard();
   });
 });

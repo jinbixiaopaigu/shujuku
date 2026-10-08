@@ -151,6 +151,9 @@ export interface ITableStorageProvider {
   /** 模式标识 */
   readonly mode: StorageMode;
 
+  /** 在 AI 请求前补齐当前模板的 SQLite 表结构，再冻结 runtime schema。 */
+  prepareRuntimeSchemaForFill?(scope: SqlTableApplyScope_ACU): void;
+
   /**
    * 从聊天消息加载表格数据到运行时
    * - native：调用 loadOrCreateJsonTableFromChatHistory_ACU

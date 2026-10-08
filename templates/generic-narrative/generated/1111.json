@@ -478,11 +478,11 @@
     "uid": "sheet_bei_wang_lu_biao",
     "name": "备忘录表",
     "sourceData": {
-      "note": "记录尚未归入其他表、但对后续剧情有用的具体事实；避免重复人物档案。\n分类为普通备忘、线索、事件、约定或其他。",
+      "note": "记录尚未归入其他表、但对后续剧情有用的具体事实；避免重复人物档案。\n分类为普通备忘、线索、事件、约定、世界设定或其他。当前世界的稳定背景与规则以“世界设定”分类分条保存；换世界时将旧世界的记录归档。",
       "initNode": "首次出现时依据明确剧情初始化「备忘录表」。未知值留空；遵守 DDL 约束。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「备忘录表」；普通退场或完成应改状态。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「备忘录表」；保留未被推翻的稳定事实。",
-      "insertNode": "仅在剧情出现新的可核实记录时插入「备忘录表」；不要预写未来或重复已有行。",
+      "insertNode": "仅在剧情出现新的可核实记录时插入「备忘录表」；不要预写未来或重复已有行。进入新世界时，将已确认的世界背景及独有规则以“世界设定”分类记录，不复写角色档案。",
       "ddl": "CREATE TABLE memo (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  title TEXT, -- 标题\n  category TEXT, -- 分类\n  archive_status TEXT, -- 归档状态\n  completion TEXT, -- 完成进度\n  record_date TEXT, -- 记录日期\n  content TEXT, -- 记录内容\n  involved_objects TEXT, -- 涉及对象\n  keywords TEXT -- 关键要素\n);"
     },
     "content": [
