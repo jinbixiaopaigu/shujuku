@@ -23,7 +23,7 @@
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「全局数据表」；普通退场或完成应改状态。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「全局数据表」；保留未被推翻的稳定事实。",
       "insertNode": "仅在剧情出现新的可核实记录时插入「全局数据表」；不要预写未来或重复已有行。",
-      "ddl": "CREATE TABLE sheet_quan_ju_shu_ju_biao (row_id INTEGER PRIMARY KEY, current_location TEXT, current_minor_region TEXT, current_major_region TEXT, prev_scene_time TEXT, elapsed_time TEXT, cur_time TEXT);",
+      "ddl": "CREATE TABLE sheet_quan_ju_shu_ju_biao (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  current_location TEXT, -- 当前详细地点\n  current_minor_region TEXT, -- 当前次要地区\n  current_major_region TEXT, -- 当前主要地区\n  prev_scene_time TEXT, -- 上轮场景时间\n  elapsed_time TEXT, -- 经过的时间\n  cur_time TEXT -- 当前时间\n);",
       "hiddenPhysicalColumns": [
         "全局状态"
       ]
@@ -102,7 +102,7 @@
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「纪要表」；普通退场或完成应改状态。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「纪要表」；保留未被推翻的稳定事实。",
       "insertNode": "仅在剧情出现新的可核实记录时插入「纪要表」；不要预写未来或重复已有行。",
-      "ddl": "CREATE TABLE sheet_ji_yao_biao (row_id INTEGER PRIMARY KEY, code_index TEXT, time_span TEXT, today_relation TEXT, summary TEXT, chronicle_text TEXT, key_dialogue TEXT);",
+      "ddl": "CREATE TABLE sheet_ji_yao_biao (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  code_index TEXT, -- 编码索引\n  time_span TEXT, -- 时间跨度\n  today_relation TEXT, -- 与今天的关系\n  summary TEXT, -- 概览\n  chronicle_text TEXT, -- 纪要\n  key_dialogue TEXT -- 重要对话\n);",
       "hiddenPhysicalColumns": []
     },
     "content": [
@@ -188,7 +188,7 @@
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「主角信息」；普通退场或完成应改状态。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「主角信息」；保留未被推翻的稳定事实。",
       "insertNode": "仅在剧情出现新的可核实记录时插入「主角信息」；不要预写未来或重复已有行。",
-      "ddl": "CREATE TABLE sheet_zhu_jue_xin_xi (row_id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age TEXT, identity_text TEXT, appearance TEXT, location_name TEXT, base_attributes TEXT, special_attributes TEXT, author_note TEXT, current_state TEXT, resources TEXT);",
+      "ddl": "CREATE TABLE sheet_zhu_jue_xin_xi (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT, -- 姓名\n  gender TEXT, -- 性别\n  age TEXT, -- 年龄\n  identity_text TEXT, -- 身份\n  appearance TEXT, -- 外貌特征\n  location_name TEXT, -- 所在地点\n  base_attributes TEXT, -- 基础属性\n  special_attributes TEXT, -- 特有属性\n  author_note TEXT, -- 作者要求\n  current_state TEXT, -- 自身状态\n  resources TEXT -- 资源数据\n);",
       "hiddenPhysicalColumns": [
         "自身状态",
         "资源数据"
@@ -370,7 +370,7 @@
       "deleteNode": "<if sql=\"SELECT 1 FROM second_npc LIMIT 1\">当不存在待降级、待删除的行时，本表不做任何删除操作。<else>本表无数据，无需删除。</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待降级'\">【待降级处理】本轮存在 role_profile = '待降级' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待降级'\"]}\n将该角色的基础信息写回 NPC 表，归档状态设为 '普通角色'，随后从本表删除。\nSQL示例(降级): INSERT INTO first_npc (row_id, name, gender, identity_text, appearance, location_name, presence_status, relations_text, archive_status)\nSELECT (SELECT COALESCE(MAX(row_id), 0) + 1 FROM first_npc), name, gender, identity_text, appearance, location_name, presence_status, relations_text, '普通角色'\nFROM second_npc WHERE role_profile = '待降级';\n\n执行后立即：DELETE FROM second_npc WHERE role_profile = '待降级';</if>\n<if sql=\"SELECT 1 FROM second_npc WHERE role_profile = '待删除'\">【待删除处理】本轮存在 role_profile = '待删除' 的行：\n{[sql \"SELECT name, role_profile FROM second_npc WHERE role_profile = '待删除'\"]}\n直接删除该行，不做任何迁移。\nSQL示例(删除): DELETE FROM second_npc WHERE role_profile = '待删除';</if>",
       "updateNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
       "insertNode": "仅依据本轮及已登记的事实更新；角色晋升以 NPC 表的追踪状态为准，禁止猜测。",
-      "ddl": "CREATE TABLE second_npc ( -- 追踪角色表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  aliases TEXT, -- 别称\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  age TEXT NOT NULL DEFAULT '未知', -- 年龄\n  appearance TEXT NOT NULL CHECK(LENGTH(appearance) <= 60), -- 外貌特征\n  identity_text TEXT NOT NULL CHECK(LENGTH(identity_text) <= 40), -- 身份\n  base_attributes TEXT NOT NULL, -- 基础属性\n  special_attributes TEXT, -- 特有属性\n  location_name TEXT NOT NULL, -- 所在地点\n  presence_status TEXT NOT NULL CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  role_profile TEXT NOT NULL CHECK(role_profile = '追踪角色'), -- 角色定位\n  author_note TEXT, -- 作者要求\n  brief_intro TEXT,\n  core_behavior TEXT,\n  current_goal TEXT,\n  interaction_style TEXT,\n  relevant_history TEXT\n);"
+      "ddl": "CREATE TABLE second_npc ( -- 追踪角色表\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  aliases TEXT, -- 别称\n  gender TEXT NOT NULL CHECK(gender IN ('男', '女', '特殊')), -- 性别\n  age TEXT NOT NULL DEFAULT '未知', -- 年龄\n  appearance TEXT NOT NULL CHECK(LENGTH(appearance) <= 60), -- 外貌特征\n  identity_text TEXT NOT NULL CHECK(LENGTH(identity_text) <= 40), -- 身份\n  base_attributes TEXT NOT NULL, -- 基础属性\n  special_attributes TEXT, -- 特有属性\n  location_name TEXT NOT NULL, -- 所在地点\n  presence_status TEXT NOT NULL CHECK(presence_status IN ('在场', '离场')), -- 在场状态\n  relations_text TEXT, -- 人际关系\n  role_profile TEXT NOT NULL CHECK(role_profile = '追踪角色'), -- 角色定位\n  author_note TEXT, -- 作者要求\n  brief_intro TEXT, -- 一句话定位\n  core_behavior TEXT, -- 核心行为逻辑\n  current_goal TEXT, -- 当前目标与顾虑\n  interaction_style TEXT, -- 互动方式\n  relevant_history TEXT -- 关键过往摘要\n);"
     },
     "content": [
       [
@@ -481,7 +481,7 @@
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「备忘录表」；普通退场或完成应改状态。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「备忘录表」；保留未被推翻的稳定事实。",
       "insertNode": "仅在剧情出现新的可核实记录时插入「备忘录表」；不要预写未来或重复已有行。",
-      "ddl": "CREATE TABLE memo (row_id INTEGER PRIMARY KEY, title TEXT, category TEXT, archive_status TEXT, completion TEXT, record_date TEXT, content TEXT, involved_objects TEXT, keywords TEXT);"
+      "ddl": "CREATE TABLE memo (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  title TEXT, -- 标题\n  category TEXT, -- 分类\n  archive_status TEXT, -- 归档状态\n  completion TEXT, -- 完成进度\n  record_date TEXT, -- 记录日期\n  content TEXT, -- 记录内容\n  involved_objects TEXT, -- 涉及对象\n  keywords TEXT -- 关键要素\n);"
     },
     "content": [
       [
@@ -557,7 +557,7 @@
     "name": "任务与约定",
     "sourceData": {
       "note": "记录明确提出的任务、承诺与约定。只更新已发生的进展；完成或失效后保留记录并改状态。",
-      "ddl": "CREATE TABLE narrative_tasks (row_id INTEGER PRIMARY KEY, title TEXT, task_type TEXT, parties TEXT, status TEXT, due_text TEXT, details TEXT, evidence_event TEXT);",
+      "ddl": "CREATE TABLE narrative_tasks (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  title TEXT, -- 标题\n  task_type TEXT, -- 类型\n  parties TEXT, -- 相关人物\n  status TEXT, -- 状态\n  due_text TEXT, -- 期限\n  details TEXT, -- 具体内容\n  evidence_event TEXT -- 依据事件\n);",
       "initNode": "首次出现时依据明确剧情初始化「任务与约定」。未知值留空；遵守 DDL 约束。",
       "insertNode": "仅在剧情出现新的可核实记录时插入「任务与约定」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「任务与约定」；保留未被推翻的稳定事实。",
@@ -609,7 +609,7 @@
       "insertNode": "仅在剧情出现新的可核实记录时插入「追踪身体基线」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「追踪身体基线」；保留未被推翻的稳定事实。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「追踪身体基线」；普通退场或完成应改状态。",
-      "ddl": "CREATE TABLE tracking_body_baseline (row_id INTEGER PRIMARY KEY, name TEXT, aliases TEXT, facial_appearance TEXT, oral_cavity TEXT, hairstyle TEXT, neck_shoulder_armpit TEXT, height_weight TEXT, body_special TEXT, skin_texture TEXT, body_scent TEXT, measurements TEXT, breast_appearance TEXT, waist_abdomen TEXT, vulva_appearance TEXT, vaginal_profile TEXT, anus_appearance TEXT, buttock_appearance TEXT, leg_appearance TEXT, foot_size TEXT, foot_appearance TEXT, lactation_body_fluid TEXT, sensitive_parts TEXT);"
+      "ddl": "CREATE TABLE tracking_body_baseline (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT, -- 姓名\n  aliases TEXT, -- 别称\n  facial_appearance TEXT, -- 相貌\n  oral_cavity TEXT, -- 口腔\n  hairstyle TEXT, -- 常用发型\n  neck_shoulder_armpit TEXT, -- 肩颈腋窝\n  height_weight TEXT, -- 身高/体重\n  body_special TEXT, -- 身材/特异性征\n  skin_texture TEXT, -- 肌肤触感\n  body_scent TEXT, -- 身体气味\n  measurements TEXT, -- 三围/罩杯\n  breast_appearance TEXT, -- 胸部外观\n  waist_abdomen TEXT, -- 腰腹外观\n  vulva_appearance TEXT, -- 外阴外观\n  vaginal_profile TEXT, -- 阴道剖面\n  anus_appearance TEXT, -- 菊穴\n  buttock_appearance TEXT, -- 臀部外观\n  leg_appearance TEXT, -- 腿部外观\n  foot_size TEXT, -- 足码/脚型\n  foot_appearance TEXT, -- 足部外观\n  lactation_body_fluid TEXT, -- 泌乳与特殊体液\n  sensitive_parts TEXT -- 敏感部位\n);"
     },
     "content": [
       [
@@ -721,7 +721,7 @@
       "insertNode": "仅在剧情出现新的可核实记录时插入「临场衣物状态」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「临场衣物状态」；保留未被推翻的稳定事实。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「临场衣物状态」；普通退场或完成应改状态。",
-      "ddl": "CREATE TABLE scene_outfit_status (row_id INTEGER PRIMARY KEY, name TEXT, current_action TEXT, face_cover TEXT, neck_accessory TEXT, top_wear TEXT, hand_accessory TEXT, bottom_wear TEXT, inner_wear TEXT, panties TEXT, leg_wear TEXT, shoes TEXT);"
+      "ddl": "CREATE TABLE scene_outfit_status (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT, -- 姓名\n  current_action TEXT, -- 当前动作姿势\n  face_cover TEXT, -- 面覆\n  neck_accessory TEXT, -- 颈饰\n  top_wear TEXT, -- 上装\n  hand_accessory TEXT, -- 手饰\n  bottom_wear TEXT, -- 下装\n  inner_wear TEXT, -- 内衣\n  panties TEXT, -- 内裤\n  leg_wear TEXT, -- 袜子和腿脚装饰物\n  shoes TEXT -- 鞋子\n);"
     },
     "content": [
       [
@@ -811,7 +811,7 @@
       "insertNode": "仅在剧情出现新的可核实记录时插入「性爱生涯实录」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「性爱生涯实录」；保留未被推翻的稳定事实。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「性爱生涯实录」；普通退场或完成应改状态。",
-      "ddl": "CREATE TABLE sex_life_record (row_id INTEGER PRIMARY KEY, start_time TEXT, end_time TEXT, location_name TEXT, partner_name TEXT, position_play TEXT, ejaculation_count TEXT, record_status TEXT);"
+      "ddl": "CREATE TABLE sex_life_record (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  start_time TEXT, -- 开始时间\n  end_time TEXT, -- 结束时间\n  location_name TEXT, -- 发生地点\n  partner_name TEXT, -- 主角外对象\n  position_play TEXT, -- 体位/玩法简述\n  ejaculation_count TEXT, -- 射精次数\n  record_status TEXT -- 状态\n);"
     },
     "content": [
       [
@@ -893,7 +893,7 @@
       "insertNode": "仅在剧情出现新的可核实记录时插入「追踪性履历」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「追踪性履历」；保留未被推翻的稳定事实。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「追踪性履历」；普通退场或完成应改状态。",
-      "ddl": "CREATE TABLE tracking_sexual_history (row_id INTEGER PRIMARY KEY, name TEXT, aliases TEXT, daily_clothing_style TEXT, nsfw_clothing_style TEXT, preferred_position_1 TEXT, position_1_reason TEXT, preferred_position_2 TEXT, position_2_reason TEXT, preferred_play TEXT, play_reason TEXT, rejection_style TEXT, dirty_talk_style TEXT, sensitive_zone_preference TEXT, aftercare_habit TEXT, first_experience_with_user TEXT, sexual_experience TEXT, sexual_skills TEXT, recent_sexual_acts TEXT, sex_count_with_user TEXT, physiological_status TEXT);"
+      "ddl": "CREATE TABLE tracking_sexual_history (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT, -- 姓名\n  aliases TEXT, -- 别称\n  daily_clothing_style TEXT, -- 喜好日常衣物\n  nsfw_clothing_style TEXT, -- 喜好NSFW衣物\n  preferred_position_1 TEXT, -- 喜好体位1\n  position_1_reason TEXT, -- 喜好原因1\n  preferred_position_2 TEXT, -- 喜好体位2\n  position_2_reason TEXT, -- 喜好原因2\n  preferred_play TEXT, -- 喜好玩法\n  play_reason TEXT, -- 喜好原因3\n  rejection_style TEXT, -- 拒绝性爱方式\n  dirty_talk_style TEXT, -- 床上淫语风格\n  sensitive_zone_preference TEXT, -- 性偏好部位\n  aftercare_habit TEXT, -- 事后状态习惯\n  first_experience_with_user TEXT, -- 主角初次记录\n  sexual_experience TEXT, -- 性经验\n  sexual_skills TEXT, -- 性技巧\n  recent_sexual_acts TEXT, -- 最近性行为\n  sex_count_with_user TEXT, -- 主角性爱次数\n  physiological_status TEXT -- 生理状态\n);"
     },
     "content": [
       [
@@ -1001,7 +1001,7 @@
       "insertNode": "仅在剧情出现新的可核实记录时插入「临场肉体状态」；不要预写未来或重复已有行。",
       "updateNode": "仅在已有事实改变且有剧情依据时更新「临场肉体状态」；保留未被推翻的稳定事实。",
       "deleteNode": "仅在用户明确要求或原记录确属错误时删除「临场肉体状态」；普通退场或完成应改状态。",
-      "ddl": "CREATE TABLE scene_body_status (row_id INTEGER PRIMARY KEY, name TEXT, facial_status TEXT, oral_status TEXT, neck_shoulder_status TEXT, armpit_status TEXT, breast_status TEXT, waist_abdomen_status TEXT, buttock_status TEXT, vulva_status TEXT, vagina_status TEXT, uterus_status TEXT, anus_status TEXT, leg_status TEXT, foot_status TEXT);"
+      "ddl": "CREATE TABLE scene_body_status (\n  row_id INTEGER PRIMARY KEY, -- row_id\n  name TEXT, -- 姓名\n  facial_status TEXT, -- 面容\n  oral_status TEXT, -- 口穴\n  neck_shoulder_status TEXT, -- 颈肩\n  armpit_status TEXT, -- 腋穴\n  breast_status TEXT, -- 乳穴\n  waist_abdomen_status TEXT, -- 腰腹\n  buttock_status TEXT, -- 臀瓣\n  vulva_status TEXT, -- 外阴\n  vagina_status TEXT, -- 小穴\n  uterus_status TEXT, -- 子宫\n  anus_status TEXT, -- 菊穴\n  leg_status TEXT, -- 腿穴\n  foot_status TEXT -- 足穴\n);"
     },
     "content": [
       [

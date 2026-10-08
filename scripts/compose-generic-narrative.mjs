@@ -7,7 +7,50 @@ import initSqlJs from 'sql.js';
 const modulesDir = path.resolve(import.meta.dirname, '../templates/generic-narrative');
 const names = ['core', 'arc', 'adventure', 'continuity', 'adult'];
 const labels = { arc: '角色弧光', adventure: '冒险世界', continuity: '场景连续性', adult: '成人题材' };
-const modules = Object.fromEntries(names.map(name => [name, JSON.parse(fs.readFileSync(path.join(modulesDir, `${name}.json`), 'utf8'))]));
+function splitColumnDefinitions(body) {
+  const parts = [];
+  let start = 0, depth = 0, quote = '';
+  for (let i = 0; i < body.length; i++) {
+    const char = body[i];
+    if (quote) {
+      if (char === quote && body[i + 1] === quote) { i++; continue; }
+      if (char === quote) quote = '';
+    } else if (char === "'" || char === '"' || char === '`') quote = char;
+    else if (char === '(') depth++;
+    else if (char === ')') depth--;
+    else if (char === ',' && depth === 0) { parts.push(body.slice(start, i).trim()); start = i + 1; }
+  }
+  parts.push(body.slice(start).trim());
+  return parts;
+}
+
+function annotateDDL(sheet) {
+  const ddl = sheet.sourceData.ddl;
+  if (ddl.includes('--')) {
+    const lines = ddl.split('\n');
+    const indexes = lines.map((line, index) => /^\s*[a-z_]\w*\s+\w+/i.test(line) && !/^\s*CREATE\b/i.test(line) ? index : -1).filter(index => index >= 0);
+    if (indexes.length !== sheet.content[0].length) throw new Error(`Header/DDL mismatch: ${sheet.name}`);
+    for (let i = 0; i < indexes.length; i++) {
+      const index = indexes[i];
+      if (!lines[index].includes('--')) lines[index] += ` -- ${sheet.content[0][i]}`;
+    }
+    return lines.join('\n');
+  }
+  const opening = ddl.indexOf('('), closing = ddl.lastIndexOf(')');
+  if (opening < 0 || closing <= opening) throw new Error(`Invalid DDL: ${sheet.name}`);
+  const definitions = splitColumnDefinitions(ddl.slice(opening + 1, closing));
+  const headers = sheet.content[0];
+  if (definitions.length !== headers.length) throw new Error(`Header/DDL mismatch: ${sheet.name}`);
+  return `${ddl.slice(0, opening + 1)}\n${definitions.map((definition, index) =>
+    `  ${definition}${index < definitions.length - 1 ? ',' : ''} -- ${headers[index]}`
+  ).join('\n')}\n${ddl.slice(closing)}`;
+}
+
+const modules = Object.fromEntries(names.map(name => {
+  const sheets = JSON.parse(fs.readFileSync(path.join(modulesDir, `${name}.json`), 'utf8'));
+  for (const sheet of Object.values(sheets)) sheet.sourceData.ddl = annotateDDL(sheet);
+  return [name, sheets];
+}));
 const SQL = await initSqlJs();
 for (const [name, sheets] of Object.entries(modules)) {
   for (const [key, sheet] of Object.entries(sheets)) {
